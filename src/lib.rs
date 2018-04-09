@@ -66,18 +66,12 @@ impl<'a> From<&'a atom::Entry> for Item {
         Item {
             title: Some(src.title().to_owned()),
             pub_date: src.published().map(str::to_owned),
-            link: link_from_alternate(src.links()),
+            link: src.links()
+                .iter()
+                .find(|link| link.rel() == "alternate")
+                .map(|link| link.href().to_owned()),
         }
     }
-}
-
-fn link_from_alternate(links: &[atom::Link]) -> Option<String> {
-    for link in links.iter() {
-        if link.rel() == "alternate" {
-            return Some(link.href().to_owned())
-        }
-    }
-    None
 }
 
 #[derive(Debug)]
