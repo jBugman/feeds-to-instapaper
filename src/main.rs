@@ -13,7 +13,7 @@ fn main() {
 
 fn run() -> Result<(), Box<Error>> {
     let _filename = "samples/junk.xml"; // should fail
-    let _filename = "samples/ghc.xml";  // RSS
+    let _filename = "samples/ghc.xml"; //  RSS
     let _filename = "samples/pike.xml"; // Atom
 
     let mut file = File::open(_filename)?;

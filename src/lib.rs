@@ -22,10 +22,15 @@ pub struct Item {
 impl FromStr for Feed {
     type Err = Box<Error>;
 
-    fn from_str(source: &str) -> Result<Self, Self::Err> {
-        let s = Syndication::from(source)?;
-        let f = Feed::from(s);
-        Ok(f)
+    fn from_str(src: &str) -> Result<Self, Self::Err> {
+        rss::Channel::from_str(src)
+            .map(Feed::from)
+            .or_else(|err| match err {
+                rss::Error::InvalidStartTag => atom::Feed::from_str(src)
+                    .map(Feed::from)
+                    .map_err(Self::Err::from),
+                e => Err(e).map_err(Self::Err::from),
+            })
     }
 }
 
@@ -70,34 +75,6 @@ impl<'a> From<&'a atom::Entry> for Item {
                 .iter()
                 .find(|link| link.rel() == "alternate")
                 .map(|link| link.href().to_owned()),
-        }
-    }
-}
-
-#[derive(Debug)]
-pub enum Syndication {
-    Atom(atom::Feed),
-    RSS(rss::Channel),
-}
-
-impl Syndication {
-    pub fn from(s: &str) -> Result<Syndication, Box<Error>> {
-        match s.parse::<atom::Feed>() {
-            Ok(feed) => Ok(Syndication::Atom(feed)),
-            Err(atom::Error::InvalidStartTag) => match s.parse::<rss::Channel>() {
-                Ok(channel) => Ok(Syndication::RSS(channel)),
-                Err(err) => Err(err.into()),
-            },
-            Err(err) => Err(err.into()),
-        }
-    }
-}
-
-impl From<Syndication> for Feed {
-    fn from(s: Syndication) -> Self {
-        match s {
-            Syndication::Atom(x) => Feed::from(x),
-            Syndication::RSS(x) => Feed::from(x),
         }
     }
 }
