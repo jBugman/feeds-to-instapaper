@@ -35,7 +35,7 @@ impl From<atom::Feed> for Feed {
             title: src.title().to_owned(),
             description: src.subtitle().map(|x| x.to_owned()),
             last_update: Some(src.updated().to_owned()),
-            items: items_from_atom(&src),
+            items: src.entries().iter().map(Item::from).collect(),
         }
     }
 }
@@ -46,7 +46,7 @@ impl From<rss::Channel> for Feed {
             title: src.title().to_owned(),
             description: Some(src.description().to_owned()),
             last_update: src.last_build_date().map(|x| x.to_owned()),
-            items: items_from_rss(&src),
+            items: src.items().iter().map(Item::from).collect(),
         }
     }
 }
@@ -87,26 +87,6 @@ fn link_from_alternate(links: &[atom::Link]) -> Option<String> {
 //         Some(c) => c.src().map(|x| x.to_owned()),
 //     }
 // }
-
-// TODO: replace with functional-style conversion
-fn items_from_rss(src: &rss::Channel) -> Vec<Item> {
-    let mut result = Vec::with_capacity(src.items().len());
-    for x in src.items().iter() {
-        let item = Item::from(x);
-        result.push(item);
-    }
-    result
-}
-
-// TODO: replace with functional-style conversion
-fn items_from_atom(src: &atom::Feed) -> Vec<Item> {
-    let mut result = Vec::with_capacity(src.entries().len());
-    for x in src.entries().iter() {
-        let item = Item::from(x);
-        result.push(item);
-    }
-    result
-}
 
 // impl ToOwned for Option<&str> {  // TODO: lifetime
 //     fn to_owned(&self) -> Self::Owned {
