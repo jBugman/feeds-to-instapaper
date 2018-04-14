@@ -6,6 +6,7 @@ use std::error::Error;
 use std::env;
 
 pub mod syndication;
+mod instapaper;
 
 #[derive(Debug)]
 pub struct Config {
@@ -36,7 +37,12 @@ pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
     let mut text = String::new();
     file.read_to_string(&mut text)?;
 
-    let feed = text.parse::<syndication::Feed>()?;
-    println!("{:#?}", feed);
+    let _feed = text.parse::<syndication::Feed>()?;
+    // println!("{:#?}", _feed);
+
+    let client = instapaper::Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
+    let is_valid = client.validate_credentials()?;
+    println!("valid credentials: {}", is_valid);
+
     Ok(())
 }
