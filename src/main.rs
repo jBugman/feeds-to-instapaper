@@ -1,28 +1,12 @@
-extern crate feeds_to_instapaper;
-
-use std::fs::File;
-use std::io::Read;
-use std::error::Error;
-
-use feeds_to_instapaper::syndication;
+extern crate feeds_to_instapaper as feeds;
 
 fn main() {
-    if let Err(err) = run() {
+    let config = feeds::Config::new().unwrap_or_else(|err| {
+        eprintln!("config error: {}", err);
+        std::process::exit(1);
+    });
+    if let Err(err) = feeds::run(&config) {
         eprintln!("error: {}", err);
         std::process::exit(1);
-    }
-}
-
-fn run() -> Result<(), Box<Error>> {
-    let _filename = "samples/junk.xml"; // should fail
-    let _filename = "samples/ghc.xml"; //  RSS
-    let _filename = "samples/pike.xml"; // Atom
-
-    let mut file = File::open(_filename)?;
-    let mut text = String::new();
-    file.read_to_string(&mut text)?;
-
-    let feed = text.parse::<syndication::Feed>()?;
-    println!("{:#?}", feed);
-    Ok(())
+    };
 }
