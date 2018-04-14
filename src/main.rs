@@ -4,6 +4,8 @@ use std::fs::File;
 use std::io::Read;
 use std::error::Error;
 
+use feeds_to_instapaper::syndication;
+
 fn main() {
     if let Err(err) = run() {
         eprintln!("error: {}", err);
@@ -20,7 +22,7 @@ fn run() -> Result<(), Box<Error>> {
     let mut text = String::new();
     file.read_to_string(&mut text)?;
 
-    let feed = text.parse::<feeds_to_instapaper::Feed>()?;
+    let feed = text.parse::<syndication::Feed>()?;
     println!("{:#?}", feed);
     Ok(())
 }
