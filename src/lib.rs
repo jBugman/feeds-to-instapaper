@@ -3,10 +3,12 @@ extern crate serde_derive;
 
 extern crate dotenv;
 
-use std::fs::File;
-use std::io::Read;
+use std::fs::{File, OpenOptions};
+use std::io::{LineWriter, Read, Write};
 use std::error::Error;
 use std::env;
+use std::collections::BTreeSet;
+use std::iter::FromIterator;
 
 pub mod syndication;
 pub mod instapaper;
@@ -17,6 +19,7 @@ use instapaper::URL;
 pub struct Config {
     instapaper_username: String,
     instapaper_password: String,
+    log_file: String,
 }
 
 impl Config {
@@ -27,12 +30,13 @@ impl Config {
         Ok(Config {
             instapaper_username,
             instapaper_password,
+            log_file: String::from("output/log.txt"),
         })
     }
 }
 
 pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
-    println!("{:#?}", cfg);
+    // println!("{:#?}", cfg);
 
     let _filename = "samples/junk.xml"; // should fail
     let _filename = "samples/ghc.xml"; //  RSS
@@ -45,18 +49,27 @@ pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
     let _feed = text.parse::<syndication::Feed>()?;
     // println!("{:#?}", _feed);
 
-    let client = instapaper::Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
+    let _client = instapaper::Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
 
     let item = syndication::Item {
-        link: Some(String::from("https://www.lipsum.com/feed/html")),
+        link: Some(String::from("https://www.lipsum.com/feed/htm")),
         pub_date: None,
         title: Some(String::from(
             "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit..",
         )),
     };
-    let url = URL::try_from(item)?;
-    let status = client.add(&url)?;
-    println!("add: {}", status);
+    let _url = URL::try_from(item)?;
+
+    let mut links = Links::from(&cfg.log_file)?;
+
+    if links.saved(&_url.url) {
+        println!("link already exists");
+    } else {
+        let status = _client.add(&_url)?;
+        println!("add: {}", status);
+        links.add(&_url.url)?;
+    }
+    // println!("log: {:?}", log);
 
     Ok(())
 }
@@ -72,5 +85,37 @@ impl URL {
             return Ok(u);
         }
         Err("link was not present".into())
+    }
+}
+
+#[derive(Debug)]
+struct Links {
+    pub items: BTreeSet<String>,
+    file: std::io::LineWriter<File>,
+}
+
+impl Links {
+    fn from(filename: &str) -> Result<Self, Box<Error>> {
+        // reading
+        let mut file = File::open(filename)?;
+        let mut text = String::new();
+        file.read_to_string(&mut text)?;
+        let items = BTreeSet::from_iter(text.lines().map(str::to_owned));
+        // writing
+        let file = OpenOptions::new().append(true).open(filename)?;
+        let file = LineWriter::new(file);
+        Ok(Links { items, file })
+    }
+
+    fn add(&mut self, item: &str) -> Result<(), Box<Error>> {
+        let existed = !self.items.insert(item.to_owned());
+        if !existed {
+            write!(self.file, "{}\n", item)?;
+        }
+        Ok(())
+    }
+
+    fn saved(&self, item: &str) -> bool {
+        self.items.contains(item)
     }
 }
