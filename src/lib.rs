@@ -19,7 +19,7 @@ use instapaper::URL;
 pub struct Config {
     instapaper_username: String,
     instapaper_password: String,
-    log_file: String,
+    links_log_file: String,
 }
 
 impl Config {
@@ -27,10 +27,11 @@ impl Config {
         dotenv::dotenv()?;
         let instapaper_username = env::var("INSTAPAPER_USERNAME")?;
         let instapaper_password = env::var("INSTAPAPER_PASSWORD")?;
+        let links_log_file = env::var("LINKS_LOG_FILE")?;
         Ok(Config {
             instapaper_username,
             instapaper_password,
-            log_file: String::from("output/log.txt"),
+            links_log_file,
         })
     }
 }
@@ -52,7 +53,7 @@ pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
     let _client = instapaper::Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
 
     let item = syndication::Item {
-        link: Some(String::from("https://www.lipsum.com/feed/htm")),
+        link: Some(String::from("https://www.lipsum.com/feed/html")),
         pub_date: None,
         title: Some(String::from(
             "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit..",
@@ -60,14 +61,16 @@ pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
     };
     let _url = URL::try_from(item)?;
 
-    let mut links = Links::from(&cfg.log_file)?;
+    let mut links = Links::from(&cfg.links_log_file)?;
 
     if links.saved(&_url.url) {
-        println!("link already exists");
+        println!("link already exists: {}", &_url.url);
     } else {
-        let status = _client.add_link(&_url)?;
-        println!("add: {}", status);
-        links.add(&_url.url)?;
+        let success = _client.add_link(&_url)?;
+        println!("added: {}", success);
+        if success {
+            links.add(&_url.url)?;
+        }
     }
 
     Ok(())

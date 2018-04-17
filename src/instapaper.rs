@@ -39,7 +39,7 @@ impl Client {
         Ok(res.status() == StatusCode::Ok)
     }
 
-    pub fn add_link(self, u: &URL) -> Result<StatusCode, Box<Error>> {
+    pub fn add_link(self, u: &URL) -> Result<bool, Box<Error>> {
         println!("{:?}", u);
         let url = self.base_url.join("add")?;
         let res = self.client
@@ -47,6 +47,7 @@ impl Client {
             .basic_auth(self.username, Some(self.password))
             .form(u)
             .send()?;
-        Ok(res.status())
+        Ok(res.status() == StatusCode::Created)
+        // TODO: use returned saved link somehow?
     }
 }
