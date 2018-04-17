@@ -65,11 +65,10 @@ pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
     if links.saved(&_url.url) {
         println!("link already exists");
     } else {
-        let status = _client.add(&_url)?;
+        let status = _client.add_link(&_url)?;
         println!("add: {}", status);
         links.add(&_url.url)?;
     }
-    // println!("log: {:?}", log);
 
     Ok(())
 }
@@ -110,7 +109,7 @@ impl Links {
     fn add(&mut self, item: &str) -> Result<(), Box<Error>> {
         let existed = !self.items.insert(item.to_owned());
         if !existed {
-            write!(self.file, "{}\n", item)?;
+            writeln!(self.file, "{}", item)?;
         }
         Ok(())
     }

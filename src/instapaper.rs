@@ -39,7 +39,7 @@ impl Client {
         Ok(res.status() == StatusCode::Ok)
     }
 
-    pub fn add(self, u: &URL) -> Result<StatusCode, Box<Error>> {
+    pub fn add_link(self, u: &URL) -> Result<StatusCode, Box<Error>> {
         println!("{:?}", u);
         let url = self.base_url.join("add")?;
         let res = self.client
