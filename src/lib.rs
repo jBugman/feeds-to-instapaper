@@ -11,6 +11,8 @@ use std::env;
 pub mod syndication;
 pub mod instapaper;
 
+use instapaper::URL;
+
 #[derive(Debug)]
 pub struct Config {
     instapaper_username: String,
@@ -44,17 +46,31 @@ pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
     // println!("{:#?}", _feed);
 
     let client = instapaper::Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
-    // let is_valid = client.validate_credentials()?;
-    // println!("valid credentials: {}", is_valid);
 
-    let url = instapaper::URL {
-        url: String::from("https://www.lipsum.com/feed/html"),
+    let item = syndication::Item {
+        link: Some(String::from("https://www.lipsum.com/feed/html")),
+        pub_date: None,
         title: Some(String::from(
             "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit..",
         )),
     };
+    let url = URL::try_from(item)?;
     let status = client.add(&url)?;
     println!("add: {}", status);
 
     Ok(())
+}
+
+impl URL {
+    // convert to TryFrom when stabilized.
+    pub fn try_from(src: syndication::Item) -> Result<URL, Box<Error>> {
+        if let Some(url) = src.link {
+            let u = URL {
+                url,
+                title: src.title,
+            };
+            return Ok(u);
+        }
+        Err("link was not present".into())
+    }
 }

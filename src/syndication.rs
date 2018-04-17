@@ -6,17 +6,17 @@ use std::error::Error;
 
 #[derive(Debug)]
 pub struct Feed {
-    title: String,
-    description: Option<String>,
-    last_update: Option<String>,
-    items: Vec<Item>,
+    pub title: String,
+    pub description: Option<String>,
+    pub last_update: Option<String>,
+    pub items: Vec<Item>,
 }
 
 #[derive(Debug)]
 pub struct Item {
-    title: Option<String>,
-    pub_date: Option<String>,
-    link: Option<String>,
+    pub title: Option<String>,
+    pub pub_date: Option<String>,
+    pub link: Option<String>,
 }
 
 impl FromStr for Feed {
