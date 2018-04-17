@@ -1,6 +1,6 @@
 [package]
 name = "feeds-to-instapaper"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Sergey Parshukov <codedby@bugman.me>"]
 publish = false
 
@@ -13,3 +13,5 @@ rss = "1.4.0"
 atom_syndication = "0.5.8"
 dotenv = "0.11.0"
 reqwest = "0.8.5"
+serde = "1.0"
+serde_derive = "1.0.38"

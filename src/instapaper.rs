@@ -12,6 +12,13 @@ pub struct Client {
     password: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct URL {
+    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub title: Option<String>,
+}
+
 impl Client {
     pub fn new(username: &str, password: &str) -> Client {
         let base_url = reqwest::Url::parse(BASE_URL).expect("typo in constant");
@@ -29,7 +36,17 @@ impl Client {
             .post(url)
             .basic_auth(self.username, Some(self.password))
             .send()?;
-        // println!("{:?}", res);
         Ok(res.status() == StatusCode::Ok)
+    }
+
+    pub fn add(self, u: &URL) -> Result<StatusCode, Box<Error>> {
+        println!("{:?}", u);
+        let url = self.base_url.join("add")?;
+        let res = self.client
+            .post(url)
+            .basic_auth(self.username, Some(self.password))
+            .form(u)
+            .send()?;
+        Ok(res.status())
     }
 }

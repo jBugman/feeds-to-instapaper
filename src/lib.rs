@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate serde_derive;
+
 extern crate dotenv;
 
 use std::fs::File;
@@ -6,7 +9,7 @@ use std::error::Error;
 use std::env;
 
 pub mod syndication;
-mod instapaper;
+pub mod instapaper;
 
 #[derive(Debug)]
 pub struct Config {
@@ -41,8 +44,17 @@ pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
     // println!("{:#?}", _feed);
 
     let client = instapaper::Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
-    let is_valid = client.validate_credentials()?;
-    println!("valid credentials: {}", is_valid);
+    // let is_valid = client.validate_credentials()?;
+    // println!("valid credentials: {}", is_valid);
+
+    let url = instapaper::URL {
+        url: String::from("https://www.lipsum.com/feed/html"),
+        title: Some(String::from(
+            "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit..",
+        )),
+    };
+    let status = client.add(&url)?;
+    println!("add: {}", status);
 
     Ok(())
 }
