@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate serde_derive;
 
+extern crate dialoguer;
 extern crate dotenv;
 
 use std::fs::{File, OpenOptions};
@@ -9,11 +10,12 @@ use std::error::Error;
 use std::env;
 use std::collections::BTreeSet;
 use std::iter::FromIterator;
+use dialoguer::Confirmation;
 
 pub mod syndication;
 pub mod instapaper;
 
-use instapaper::URL;
+use instapaper::{Client, URL};
 
 #[derive(Debug)]
 pub struct Config {
@@ -37,52 +39,69 @@ impl Config {
 }
 
 pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
-    // println!("{:#?}", cfg);
-
     let _filename = "samples/junk.xml"; // should fail
     let _filename = "samples/ghc.xml"; //  RSS
     let _filename = "samples/pike.xml"; // Atom
 
-    let mut file = File::open(_filename)?;
+    let mut links = Links::from(&cfg.links_log_file)?;
+
+    let client = Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
+
+    process_feed(&client, &mut links, _filename)
+}
+
+fn process_feed(client: &Client, links: &mut Links, path: &str) -> Result<(), Box<Error>> {
+    // TODO: replace with direct response parsing?
+    let mut file = File::open(path)?;
     let mut text = String::new();
     file.read_to_string(&mut text)?;
 
-    let _feed = text.parse::<syndication::Feed>()?;
-    // println!("{:#?}", _feed);
+    let feed = text.parse::<syndication::Feed>()?;
+    println!("Processing \"{}\"", &feed.title);
 
-    let _client = instapaper::Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
-
-    let item = syndication::Item {
-        link: Some(String::from("https://www.lipsum.com/feed/html")),
-        pub_date: None,
-        title: Some(String::from(
-            "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit..",
-        )),
+    let mut skip_count = 0;
+    let print_skips = |count: &mut u16| {
+        if *count > 0 {
+            println!("skipped {} already existing links", count);
+            *count = 0;
+        }
     };
-    let _url = URL::try_from(item)?;
 
-    let mut links = Links::from(&cfg.links_log_file)?;
+    for item in feed.items.into_iter().rev() {
+        let u = URL::try_from(item)?;
+        // skipping if already added
+        if links.saved(&u.url) {
+            skip_count += 1;
+            continue;
+        }
+        print_skips(&mut skip_count);
 
-    if links.saved(&_url.url) {
-        println!("link already exists: {}", &_url.url);
-    } else {
-        let success = _client.add_link(&_url)?;
-        println!("added: {}", success);
-        if success {
-            links.add(&_url.url)?;
+        let name: &str = u.title.as_ref().unwrap_or(&u.url);
+        if Confirmation::new(&format!("Add \"{}\"?", name)).interact()? {
+            println!("addeding to instapaper...");
+            let success = client.add_link(&u)?;
+            if success {
+                println!("done");
+                links.add(&u.url)?;
+            }
+        } else {
+            links.add(&u.url)?;
+            println!("marked {} as skipped", &u.url);
         }
     }
+    print_skips(&mut skip_count);
 
     Ok(())
 }
 
 impl URL {
-    // convert to TryFrom when stabilized.
+    // TODO: convert to TryFrom when stabilized.
     pub fn try_from(src: syndication::Item) -> Result<URL, Box<Error>> {
         if let Some(url) = src.link {
             let u = URL {
                 url,
-                title: src.title,
+                // TODO: replace with .filter when stabilized
+                title: src.title.into_iter().filter(|s| !s.is_empty()).next(), // dropping empty titles
             };
             return Ok(u);
         }

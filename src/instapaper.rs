@@ -30,21 +30,20 @@ impl Client {
         }
     }
 
-    pub fn validate_credentials(self) -> Result<bool, Box<Error>> {
+    pub fn validate_credentials(&self) -> Result<bool, Box<Error>> {
         let url = self.base_url.join("authenticate")?;
         let res = self.client
             .post(url)
-            .basic_auth(self.username, Some(self.password))
+            .basic_auth(self.username.to_owned(), Some(self.password.to_owned()))
             .send()?;
         Ok(res.status() == StatusCode::Ok)
     }
 
-    pub fn add_link(self, u: &URL) -> Result<bool, Box<Error>> {
-        println!("{:?}", u);
+    pub fn add_link(&self, u: &URL) -> Result<bool, Box<Error>> {
         let url = self.base_url.join("add")?;
         let res = self.client
             .post(url)
-            .basic_auth(self.username, Some(self.password))
+            .basic_auth(self.username.to_owned(), Some(self.password.to_owned()))
             .form(u)
             .send()?;
         Ok(res.status() == StatusCode::Created)
