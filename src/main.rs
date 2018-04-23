@@ -1,11 +1,7 @@
-extern crate feeds_to_instapaper as feeds;
+extern crate feeds_to_instapaper;
 
 fn main() {
-    let config = feeds::Config::new().unwrap_or_else(|err| {
-        eprintln!("config error: {}", err);
-        std::process::exit(1);
-    });
-    if let Err(err) = feeds::run(&config) {
+    if let Err(err) = feeds_to_instapaper::run() {
         eprintln!("error: {}", err);
         std::process::exit(1);
     };

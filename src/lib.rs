@@ -20,41 +20,31 @@ pub mod instapaper;
 use instapaper::{Client, URL};
 use syndication::{Feed, Item};
 
-#[derive(Debug)]
-pub struct Config {
-    instapaper_username: String,
-    instapaper_password: String,
-    links_log_file: String,
-}
+pub fn run() -> Result<(), Box<Error>> {
+    // Config
+    dotenv::dotenv()?;
+    let instapaper_username = env::var("INSTAPAPER_USERNAME")?;
+    let instapaper_password = env::var("INSTAPAPER_PASSWORD")?;
+    let links_log_file = env::var("LINKS_LOG_FILE")?;
+    let links_list_file = env::var("LINKS_LIST_FILE")?;
 
-impl Config {
-    pub fn new() -> Result<Self, Box<Error>> {
-        dotenv::dotenv()?;
-        let instapaper_username = env::var("INSTAPAPER_USERNAME")?;
-        let instapaper_password = env::var("INSTAPAPER_PASSWORD")?;
-        let links_log_file = env::var("LINKS_LOG_FILE")?;
-        Ok(Config {
-            instapaper_username,
-            instapaper_password,
-            links_log_file,
-        })
-    }
-}
+    let mut links = Links::from(&links_log_file)?;
+    let client = Client::new(&instapaper_username, &instapaper_password);
 
-pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
-    let mut links = Links::from(&cfg.links_log_file)?;
-    let client = Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
-
-    let urls = vec![
-        // TODO: load list from file
-        "https://blog.rust-lang.org/feed.xml",
-    ];
+    let urls = load_link_list(&links_list_file)?;
     for url in urls {
-        println!("Loading {}...", url);
-        let xml = reqwest::get(url)?.text()?;
+        println!("Loading {}…", url);
+        let xml = reqwest::get(&url)?.text()?;
         process_feed(&client, &mut links, &xml)?;
     }
     Ok(())
+}
+
+fn load_link_list(path: &str) -> Result<Vec<String>, Box<Error>> {
+    let mut file = File::open(path)?;
+    let mut text = String::new();
+    file.read_to_string(&mut text)?;
+    Ok(text.lines().map(str::to_owned).collect())
 }
 
 fn process_feed(client: &Client, links: &mut Links, xml: &str) -> Result<(), Box<Error>> {
@@ -80,7 +70,7 @@ fn process_feed(client: &Client, links: &mut Links, xml: &str) -> Result<(), Box
 
         let name: &str = u.title.as_ref().unwrap_or(&u.url);
         if Confirmation::new(&format!("Add \"{}\"?", name)).interact()? {
-            println!("Adding to instapaper...");
+            println!("Adding to Instapaper…");
             let success = client.add_link(&u)?;
             if success {
                 println!("> done");
