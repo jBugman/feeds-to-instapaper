@@ -1,8 +1,8 @@
-extern crate atom_syndication as atom;
-extern crate rss;
-
 use std::str::FromStr;
 use std::error::Error;
+
+use atom_syndication as atom;
+use rss;
 
 #[derive(Debug)]
 pub struct Feed {

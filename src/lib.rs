@@ -1,8 +1,10 @@
 #[macro_use]
 extern crate serde_derive;
-
+extern crate atom_syndication;
 extern crate dialoguer;
 extern crate dotenv;
+extern crate reqwest;
+extern crate rss;
 
 use std::fs::{File, OpenOptions};
 use std::io::{LineWriter, Read, Write};

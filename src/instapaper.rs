@@ -1,7 +1,6 @@
-extern crate reqwest;
-
 use std::error::Error;
-use self::reqwest::StatusCode;
+use reqwest;
+use reqwest::StatusCode;
 
 const BASE_URL: &str = "https://www.instapaper.com/api/";
 
