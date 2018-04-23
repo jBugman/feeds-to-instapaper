@@ -45,26 +45,16 @@ pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
     let mut links = Links::from(&cfg.links_log_file)?;
     let client = Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
 
-    let paths = vec![
-        "samples/ghc.xml",  //  RSS
-        "samples/pike.xml", // Atom
+    let urls = vec![
+        // TODO: load list from file
+        "https://blog.rust-lang.org/feed.xml",
     ];
-    for path in paths {
-        let xml = placeholder_load_feed(path)?; // FIXME: replace with real one
+    for url in urls {
+        println!("Loading {}...", url);
+        let xml = reqwest::get(url)?.text()?;
         process_feed(&client, &mut links, &xml)?;
     }
     Ok(())
-}
-
-fn placeholder_load_feed(path: &str) -> Result<String, Box<Error>> {
-    let mut file = File::open(path)?;
-    let mut text = String::new();
-    file.read_to_string(&mut text)?;
-    Ok(text)
-}
-
-fn load_feed(_url: &str) -> Result<String, Box<Error>> {
-    unimplemented!();
 }
 
 fn process_feed(client: &Client, links: &mut Links, xml: &str) -> Result<(), Box<Error>> {
@@ -74,7 +64,7 @@ fn process_feed(client: &Client, links: &mut Links, xml: &str) -> Result<(), Box
     let mut skip_count = 0;
     let print_skips = |count: &mut u16| {
         if *count > 0 {
-            println!("skipped {} already existing links", count);
+            println!("> skipped {} already existing links", count);
             *count = 0;
         }
     };
@@ -90,15 +80,15 @@ fn process_feed(client: &Client, links: &mut Links, xml: &str) -> Result<(), Box
 
         let name: &str = u.title.as_ref().unwrap_or(&u.url);
         if Confirmation::new(&format!("Add \"{}\"?", name)).interact()? {
-            println!("addeding to instapaper...");
+            println!("Adding to instapaper...");
             let success = client.add_link(&u)?;
             if success {
-                println!("done");
+                println!("> done");
                 links.add(&u.url)?;
             }
         } else {
             links.add(&u.url)?;
-            println!("marked {} as skipped", &u.url);
+            println!("> marked {} as skipped", &u.url);
         }
     }
     print_skips(&mut skip_count);
