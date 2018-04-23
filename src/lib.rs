@@ -18,6 +18,7 @@ pub mod syndication;
 pub mod instapaper;
 
 use instapaper::{Client, URL};
+use syndication::{Feed, Item};
 
 #[derive(Debug)]
 pub struct Config {
@@ -41,24 +42,33 @@ impl Config {
 }
 
 pub fn run(cfg: &Config) -> Result<(), Box<Error>> {
-    let _filename = "samples/junk.xml"; // should fail
-    let _filename = "samples/ghc.xml"; //  RSS
-    let _filename = "samples/pike.xml"; // Atom
-
     let mut links = Links::from(&cfg.links_log_file)?;
-
     let client = Client::new(&cfg.instapaper_username, &cfg.instapaper_password);
 
-    process_feed(&client, &mut links, _filename)
+    let paths = vec![
+        "samples/ghc.xml",  //  RSS
+        "samples/pike.xml", // Atom
+    ];
+    for path in paths {
+        let xml = placeholder_load_feed(path)?; // FIXME: replace with real one
+        process_feed(&client, &mut links, &xml)?;
+    }
+    Ok(())
 }
 
-fn process_feed(client: &Client, links: &mut Links, path: &str) -> Result<(), Box<Error>> {
-    // TODO: replace with direct response parsing?
+fn placeholder_load_feed(path: &str) -> Result<String, Box<Error>> {
     let mut file = File::open(path)?;
     let mut text = String::new();
     file.read_to_string(&mut text)?;
+    Ok(text)
+}
 
-    let feed = text.parse::<syndication::Feed>()?;
+fn load_feed(_url: &str) -> Result<String, Box<Error>> {
+    unimplemented!();
+}
+
+fn process_feed(client: &Client, links: &mut Links, xml: &str) -> Result<(), Box<Error>> {
+    let feed: Feed = xml.parse()?;
     println!("Processing \"{}\"", &feed.title);
 
     let mut skip_count = 0;
@@ -98,7 +108,7 @@ fn process_feed(client: &Client, links: &mut Links, path: &str) -> Result<(), Bo
 
 impl URL {
     // TODO: convert to TryFrom when stabilized.
-    pub fn try_from(src: syndication::Item) -> Result<URL, Box<Error>> {
+    pub fn try_from(src: Item) -> Result<URL, Box<Error>> {
         if let Some(url) = src.link {
             let u = URL {
                 url,
@@ -114,7 +124,7 @@ impl URL {
 #[derive(Debug)]
 struct Links {
     pub items: BTreeSet<String>,
-    file: std::io::LineWriter<File>,
+    file: LineWriter<File>,
 }
 
 impl Links {
