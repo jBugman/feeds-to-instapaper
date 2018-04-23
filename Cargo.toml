@@ -3,6 +3,7 @@ name = "feeds-to-instapaper"
 version = "0.1.0"
 authors = ["Sergey Parshukov <codedby@bugman.me>"]
 readme = "README.md"
+license = "MIT"
 publish = false
 
 [[bin]]
