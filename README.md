@@ -4,7 +4,7 @@ Loads Atom or RSS feeds from the provided link list and interactively adds new p
 
 It asks user input for every new entry and saves this choice for future use in subsequent runs.
 
-Configuration is provided using environment variables (tool can .env file automatically):
+Configuration is provided using environment variables (tool can read .env file):
 
     INSTAPAPER_USERNAME
     INSTAPAPER_PASSWORD
