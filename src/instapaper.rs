@@ -1,18 +1,20 @@
 use std::error::Error;
+
 use reqwest;
 use reqwest::StatusCode;
+use url::Url;
 
 const BASE_URL: &str = "https://www.instapaper.com/api/";
 
 pub struct Client {
     client: reqwest::Client,
-    base_url: reqwest::Url,
+    base_url: Url,
     username: String,
     password: String,
 }
 
 #[derive(Debug, Serialize)]
-pub struct URL {
+pub struct Link {
     pub url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
@@ -38,12 +40,12 @@ impl Client {
         Ok(res.status() == StatusCode::Ok)
     }
 
-    pub fn add_link(&self, u: &URL) -> Result<bool, Box<Error>> {
+    pub fn add_link(&self, link: &Link) -> Result<bool, Box<Error>> {
         let url = self.base_url.join("add")?;
         let res = self.client
             .post(url)
             .basic_auth(self.username.to_owned(), Some(self.password.to_owned()))
-            .form(u)
+            .form(link)
             .send()?;
         Ok(res.status() == StatusCode::Created)
         // TODO: use returned saved link somehow?

@@ -1,6 +1,6 @@
 [package]
 name = "feeds-to-instapaper"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Sergey Parshukov <codedby@bugman.me>"]
 readme = "README.md"
 license = "MIT"
@@ -11,10 +11,12 @@ name = "instapaper"
 path = "src/main.rs"
 
 [dependencies]
-rss = "1.4.0"
+rss = "1.5.0"
 atom_syndication = "0.5.8"
 dotenv = "0.11.0"
 reqwest = "0.8.5"
 serde = "1.0"
 serde_derive = "1.0.38"
 dialoguer = "0.1.0"
+url = "1.7.0"
+try_from = "0.2.2"

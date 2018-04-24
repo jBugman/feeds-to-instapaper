@@ -5,6 +5,8 @@ extern crate dialoguer;
 extern crate dotenv;
 extern crate reqwest;
 extern crate rss;
+extern crate try_from;
+extern crate url;
 
 use std::fs::{File, OpenOptions};
 use std::io::{LineWriter, Read, Write};
@@ -12,12 +14,14 @@ use std::error::Error;
 use std::env;
 use std::collections::BTreeSet;
 use std::iter::FromIterator;
+
 use dialoguer::Confirmation;
+use try_from::TryFrom; // TODO: convert to std(?) TryFrom when stabilized
 
 pub mod syndication;
 pub mod instapaper;
 
-use instapaper::{Client, URL};
+use instapaper::{Client, Link};
 use syndication::{Feed, Item};
 
 pub fn run() -> Result<(), Box<Error>> {
@@ -60,25 +64,25 @@ fn process_feed(client: &Client, links: &mut Links, xml: &str) -> Result<(), Box
     };
 
     for item in feed.items.into_iter().rev() {
-        let u = URL::try_from(item)?;
+        let link = Link::try_from(item)?;
         // skipping if already added
-        if links.saved(&u.url) {
+        if links.saved(&link.url) {
             skip_count += 1;
             continue;
         }
         print_skips(&mut skip_count);
 
-        let name: &str = u.title.as_ref().unwrap_or(&u.url);
+        let name = link.title.as_ref().unwrap_or(&link.url);
         if Confirmation::new(&format!("Add \"{}\"?", name)).interact()? {
             println!("Adding to Instapaper…");
-            let success = client.add_link(&u)?;
+            let success = client.add_link(&link)?;
             if success {
                 println!("> done");
-                links.add(&u.url)?;
+                links.add(&link.url)?;
             }
         } else {
-            links.add(&u.url)?;
-            println!("> marked {} as skipped", &u.url);
+            links.add(&link.url)?;
+            println!("> marked {} as skipped", &link.url);
         }
     }
     print_skips(&mut skip_count);
@@ -86,18 +90,14 @@ fn process_feed(client: &Client, links: &mut Links, xml: &str) -> Result<(), Box
     Ok(())
 }
 
-impl URL {
-    // TODO: convert to TryFrom when stabilized.
-    pub fn try_from(src: Item) -> Result<URL, Box<Error>> {
-        if let Some(url) = src.link {
-            let u = URL {
-                url,
-                // TODO: replace with .filter when stabilized
-                title: src.title.into_iter().filter(|s| !s.is_empty()).next(), // dropping empty titles
-            };
-            return Ok(u);
-        }
-        Err("link was not present".into())
+impl TryFrom<Item> for Link {
+    type Err = Box<Error>;
+
+    fn try_from(src: Item) -> Result<Self, Self::Err> {
+        let link = src.link.ok_or("link was not present")?;
+        // TODO: replace with .filter when stabilized
+        let title = src.title.into_iter().find(|s| !s.is_empty()); // dropping empty titles
+        Ok(Link { url: link, title })
     }
 }
 
