@@ -17,6 +17,7 @@ use std::iter::FromIterator;
 
 use dialoguer::Confirmation;
 use try_from::TryFrom; // TODO: convert to std(?) TryFrom when stabilized
+use url::Url;
 
 pub mod syndication;
 pub mod instapaper;
@@ -37,9 +38,7 @@ pub fn run() -> Result<(), Box<Error>> {
 
     let urls = load_link_list(&links_list_file)?;
     for url in urls {
-        println!("Loading {}…", url);
-        let xml = reqwest::get(&url)?.text()?;
-        process_feed(&client, &mut links, &xml)?;
+        process_feed(&client, &mut links, &url)?;
     }
     Ok(())
 }
@@ -51,8 +50,12 @@ fn load_link_list(path: &str) -> Result<Vec<String>, Box<Error>> {
     Ok(text.lines().map(str::to_owned).collect())
 }
 
-fn process_feed(client: &Client, links: &mut Links, xml: &str) -> Result<(), Box<Error>> {
-    let feed: Feed = xml.parse()?;
+fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<(), Box<Error>> {
+    // Downloading feed
+    println!("Downloading {}…", url);
+    let xml = reqwest::get(url)?.text()?;
+    // Parsing
+    let feed = xml.parse::<Feed>()?;
     println!("Processing \"{}\"", &feed.title);
 
     let mut skip_count = 0;
@@ -63,8 +66,11 @@ fn process_feed(client: &Client, links: &mut Links, xml: &str) -> Result<(), Box
         }
     };
 
+    // get base url for a feed
+    let feed_url = feed.link.unwrap_or(url.to_owned());
+    let feed_url = Url::parse(&feed_url)?;
     for item in feed.items.into_iter().rev() {
-        let link = Link::try_from(item)?;
+        let link = Link::try_from(item)?.fix_url_schema(&feed_url)?;
         // skipping if already added
         if links.saved(&link.url) {
             skip_count += 1;

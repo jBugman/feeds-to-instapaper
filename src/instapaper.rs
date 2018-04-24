@@ -2,7 +2,7 @@ use std::error::Error;
 
 use reqwest;
 use reqwest::StatusCode;
-use url::Url;
+use url::{ParseError, Url};
 
 const BASE_URL: &str = "https://www.instapaper.com/api/";
 
@@ -18,6 +18,21 @@ pub struct Link {
     pub url: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+}
+
+impl Link {
+    // fixes url schema using feed url as a template
+    pub fn fix_url_schema(mut self, feed_url: &Url) -> Result<Self, Box<Error>> {
+        match Url::parse(&self.url) {
+            Ok(_) => Ok(self),
+            Err(ParseError::RelativeUrlWithoutBase) => {
+                let url = feed_url.join(&self.url)?;
+                self.url = url.into_string();
+                Ok(self)
+            }
+            Err(err) => Err(err.into()),
+        }
+    }
 }
 
 impl Client {
