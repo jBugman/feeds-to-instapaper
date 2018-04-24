@@ -9,6 +9,7 @@ pub struct Feed {
     pub title: String,
     pub description: Option<String>,
     pub last_update: Option<String>,
+    pub link: Option<String>,
     pub items: Vec<Item>,
 }
 
@@ -40,6 +41,7 @@ impl From<atom::Feed> for Feed {
             title: src.title().to_owned(),
             description: src.subtitle().map(str::to_owned),
             last_update: Some(src.updated().to_owned()),
+            link: find_alternate(src.links()),
             items: src.entries().iter().map(Item::from).collect(),
         }
     }
@@ -51,6 +53,7 @@ impl From<rss::Channel> for Feed {
             title: src.title().to_owned(),
             description: Some(src.description().to_owned()),
             last_update: src.last_build_date().map(str::to_owned),
+            link: Some(src.link().to_owned()),
             items: src.items().iter().map(Item::from).collect(),
         }
     }
@@ -71,10 +74,14 @@ impl<'a> From<&'a atom::Entry> for Item {
         Item {
             title: Some(src.title().to_owned()),
             pub_date: src.published().map(str::to_owned),
-            link: src.links()
-                .iter()
-                .find(|link| link.rel() == "alternate")
-                .map(|link| link.href().to_owned()),
+            link: find_alternate(src.links()),
         }
     }
+}
+
+fn find_alternate(links: &[atom::Link]) -> Option<String> {
+    links
+        .iter()
+        .find(|link| link.rel() == "alternate" || link.rel().is_empty())
+        .map(|link| link.href().to_owned())
 }
