@@ -1,6 +1,6 @@
 [package]
 name = "feeds-to-instapaper"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["Sergey Parshukov <codedby@bugman.me>"]
 readme = "README.md"
 license = "MIT"
@@ -21,3 +21,4 @@ dialoguer = "0.1.0"
 url = "1.7.0"
 try_from = "0.2.2"
 failure = "0.1.1"
+shellexpand = "1.0.0"

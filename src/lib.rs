@@ -7,6 +7,7 @@ extern crate reqwest;
 extern crate rss;
 #[macro_use]
 extern crate serde_derive;
+extern crate shellexpand;
 extern crate try_from;
 extern crate url;
 
@@ -127,17 +128,29 @@ struct Links {
 
 impl Links {
     fn from(path: &str) -> Result<Self, Error> {
-        // reading
-        let mut file = File::open(path).context(format_err!("failed to open log file ({})", path))?;
+        // expanding home directory in path
+        let path: &str = &shellexpand::tilde(path);
+        let path = std::path::Path::new(path);
+        // ensuring log file directory
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent).context(format_err!(
+                "failed to create parent dir for a log file ({})",
+                parent.display()
+            ))?;
+        }
+        // open or create file
+        let mut file = OpenOptions::new()
+            .read(true)
+            .append(true)
+            .create(true)
+            .open(path)
+            .context(format_err!("failed to open log file ({})", path.display()))?;
+        // read
         let mut text = String::new();
         file.read_to_string(&mut text)
-            .context(format_err!("failed to read log file ({})", path))?;
+            .context(format_err!("failed to read log file ({})", path.display()))?;
         let items = BTreeSet::from_iter(text.lines().map(str::to_owned));
-        // writing
-        let file = OpenOptions::new()
-            .append(true)
-            .open(path)
-            .context(format_err!("failed to open log file ({})", path))?;
+        // set up writing
         let file = LineWriter::new(file);
         Ok(Links { items, file })
     }
