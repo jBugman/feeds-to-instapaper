@@ -1,5 +1,4 @@
-use std::error::Error;
-
+use failure::{Error, Fail, ResultExt};
 use reqwest;
 use reqwest::StatusCode;
 use url::{ParseError, Url};
@@ -22,15 +21,15 @@ pub struct Link {
 
 impl Link {
     // fixes url schema using feed url as a template
-    pub fn fix_url_schema(mut self, feed_url: &Url) -> Result<Self, Box<Error>> {
+    pub fn fix_url_schema(mut self, feed_url: &Url) -> Result<Self, Error> {
         match Url::parse(&self.url) {
             Ok(_) => Ok(self),
             Err(ParseError::RelativeUrlWithoutBase) => {
-                let url = feed_url.join(&self.url)?;
+                let url = feed_url.join(&self.url).context("failed to fix post url")?;
                 self.url = url.into_string();
                 Ok(self)
             }
-            Err(err) => Err(err.into()),
+            Err(err) => Err(err.context("failed to parse post url"))?,
         }
     }
 }
@@ -46,22 +45,27 @@ impl Client {
         }
     }
 
-    pub fn validate_credentials(&self) -> Result<bool, Box<Error>> {
+    pub fn validate_credentials(&self) -> Result<bool, Error> {
         let url = self.base_url.join("authenticate")?;
         let res = self.client
             .post(url)
             .basic_auth(self.username.to_owned(), Some(self.password.to_owned()))
-            .send()?;
+            .send()
+            .context("could not validate instapaper credentials")?;
         Ok(res.status() == StatusCode::Ok)
     }
 
-    pub fn add_link(&self, link: &Link) -> Result<bool, Box<Error>> {
+    pub fn add_link(&self, link: &Link) -> Result<bool, Error> {
         let url = self.base_url.join("add")?;
         let res = self.client
             .post(url)
             .basic_auth(self.username.to_owned(), Some(self.password.to_owned()))
             .form(link)
-            .send()?;
+            .send()
+            .context(format_err!(
+                "could not post new link to instapaper ({})",
+                link.url
+            ))?;
         Ok(res.status() == StatusCode::Created)
         // TODO: use returned saved link somehow?
     }

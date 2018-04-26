@@ -1,7 +1,7 @@
 use std::str::FromStr;
-use std::error::Error;
 
 use atom_syndication as atom;
+use failure::{Fail, Error, SyncFailure};
 use rss;
 
 #[derive(Debug)]
@@ -21,17 +21,17 @@ pub struct Item {
 }
 
 impl FromStr for Feed {
-    type Err = Box<Error>;
+    type Err = Error;
 
     fn from_str(src: &str) -> Result<Self, Self::Err> {
-        rss::Channel::from_str(src)
-            .map(Feed::from)
-            .or_else(|err| match err {
-                rss::Error::InvalidStartTag => atom::Feed::from_str(src)
-                    .map(Feed::from)
-                    .map_err(Self::Err::from),
-                e => Err(e).map_err(Self::Err::from),
-            })
+        match rss::Channel::from_str(src) {
+            Ok(chan) => Ok(Feed::from(chan)),
+            Err(rss::Error::InvalidStartTag) => atom::Feed::from_str(src)
+                .map(Feed::from)
+                .map_err(SyncFailure::new) // fixing old error-chain lack of Sync 
+                .map_err(|e| e.context("failed to parse atom xml")),
+            Err(err) => Err(err.context("failed to parse rss xml")),
+        }.map_err(Error::from)
     }
 }
 
