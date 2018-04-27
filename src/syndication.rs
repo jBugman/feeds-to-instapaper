@@ -4,6 +4,8 @@ use atom_syndication as atom;
 use failure::{Fail, Error, SyncFailure};
 use rss;
 
+use ::Result;
+
 #[derive(Debug)]
 pub struct Feed {
     pub title: String,
@@ -23,7 +25,7 @@ pub struct Item {
 impl FromStr for Feed {
     type Err = Error;
 
-    fn from_str(src: &str) -> Result<Self, Self::Err> {
+    fn from_str(src: &str) -> Result<Self> {
         match rss::Channel::from_str(src) {
             Ok(chan) => Ok(Feed::from(chan)),
             Err(rss::Error::InvalidStartTag) => atom::Feed::from_str(src)

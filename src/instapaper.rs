@@ -1,7 +1,9 @@
-use failure::{Error, Fail, ResultExt};
+use failure::{Fail, ResultExt};
 use reqwest;
 use reqwest::StatusCode;
 use url::{ParseError, Url};
+
+use ::Result;
 
 const BASE_URL: &str = "https://www.instapaper.com/api/";
 
@@ -21,7 +23,7 @@ pub struct Link {
 
 impl Link {
     // fixes url schema using feed url as a template
-    pub fn fix_url_schema(mut self, feed_url: &Url) -> Result<Self, Error> {
+    pub fn fix_url_schema(mut self, feed_url: &Url) -> Result<Self> {
         match Url::parse(&self.url) {
             Ok(_) => Ok(self),
             Err(ParseError::RelativeUrlWithoutBase) => {
@@ -45,7 +47,7 @@ impl Client {
         }
     }
 
-    pub fn validate_credentials(&self) -> Result<bool, Error> {
+    pub fn validate_credentials(&self) -> Result<bool> {
         let url = self.base_url.join("authenticate")?;
         let res = self.client
             .post(url)
@@ -55,7 +57,7 @@ impl Client {
         Ok(res.status() == StatusCode::Ok)
     }
 
-    pub fn add_link(&self, link: &Link) -> Result<bool, Error> {
+    pub fn add_link(&self, link: &Link) -> Result<bool> {
         let url = self.base_url.join("add")?;
         let res = self.client
             .post(url)

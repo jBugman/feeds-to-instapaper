@@ -16,6 +16,7 @@ use std::env;
 use std::fs::{File, OpenOptions};
 use std::io::{LineWriter, Read, Write};
 use std::iter::FromIterator;
+use std::path::Path;
 
 use dialoguer::Confirmation;
 use failure::{Error, ResultExt, SyncFailure};
@@ -28,7 +29,9 @@ pub mod instapaper;
 use instapaper::{Client, Link};
 use syndication::{Feed, Item};
 
-pub fn run() -> Result<(), Error> {
+type Result<T> = std::result::Result<T, Error>;
+
+pub fn run() -> Result<()> {
     // Config
     dotenv::dotenv()
         .map_err(SyncFailure::new)
@@ -50,16 +53,22 @@ pub fn run() -> Result<(), Error> {
     Ok(())
 }
 
-fn load_link_list(path: &str) -> Result<Vec<String>, Error> {
-    let mut file =
-        File::open(path).context(format_err!("failed to open link list file ({})", path))?;
-    let mut text = String::new();
-    file.read_to_string(&mut text)
-        .context(format_err!("failed to read link list file ({})", path))?;
+// TODO: replace when stabilized
+fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
+    let mut file = File::open(path)?;
+    let buf_size = file.metadata().map(|m| m.len() as usize + 1).unwrap_or(0);
+    let mut string = String::with_capacity(buf_size);
+    file.read_to_string(&mut string)?;
+    Ok(string)
+}
+
+fn load_link_list(path: &str) -> Result<Vec<String>> {
+    let text =
+        read_to_string(path).context(format_err!("failed to read link list file ({})", path))?;
     Ok(text.lines().map(str::to_owned).collect())
 }
 
-fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<(), Error> {
+fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
     // Downloading feed
     println!("Downloading {}…", url);
     let xml = reqwest::get(url)
@@ -111,7 +120,7 @@ fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<(), Err
 impl TryFrom<Item> for Link {
     type Err = Error;
 
-    fn try_from(src: Item) -> Result<Self, Self::Err> {
+    fn try_from(src: Item) -> Result<Self> {
         let link = src.link
             .ok_or_else(|| format_err!("url is missing in post"))?;
         // TODO: replace with .filter when stabilized
@@ -127,10 +136,10 @@ struct Links {
 }
 
 impl Links {
-    fn from(path: &str) -> Result<Self, Error> {
+    fn from(path: &str) -> Result<Self> {
         // expanding home directory in path
         let path: &str = &shellexpand::tilde(path);
-        let path = std::path::Path::new(path);
+        let path = Path::new(path);
         // ensuring log file directory
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent).context(format_err!(
@@ -155,7 +164,7 @@ impl Links {
         Ok(Links { items, file })
     }
 
-    fn add(&mut self, item: &str) -> Result<(), Error> {
+    fn add(&mut self, item: &str) -> Result<()> {
         let existed = !self.items.insert(item.to_owned());
         if !existed {
             writeln!(self.file, "{}", item).context("failed to write an url to a log file")?;
