@@ -1,10 +1,10 @@
 use std::str::FromStr;
 
 use atom_syndication as atom;
-use failure::{Fail, Error, SyncFailure};
+use failure::{Error, Fail, SyncFailure};
 use rss;
 
-use ::Result;
+use Result;
 
 #[derive(Debug)]
 pub struct Feed {

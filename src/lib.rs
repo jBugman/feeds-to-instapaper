@@ -26,7 +26,7 @@ use url::Url;
 pub mod syndication;
 pub mod instapaper;
 
-use instapaper::{Client, Link};
+use instapaper::{Client, Credentials, Link};
 use syndication::{Feed, Item};
 
 type Result<T> = std::result::Result<T, Error>;
@@ -44,7 +44,7 @@ pub fn run() -> Result<()> {
     let links_list_file = env::var("LINKS_LIST_FILE").context("links list file path is not set")?;
 
     let mut links = Links::from(&links_log_file)?;
-    let client = Client::new(&instapaper_username, &instapaper_password);
+    let client = Client::new(Credentials::new(instapaper_username, instapaper_password));
 
     let urls = load_link_list(&links_list_file)?;
     for url in urls {
@@ -102,11 +102,9 @@ fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
         let name = link.title.as_ref().unwrap_or(&link.url);
         if Confirmation::new(&format!("Add \"{}\"?", name)).interact()? {
             println!("Adding to Instapaper…");
-            let success = client.add_link(&link)?;
-            if success {
-                println!("> done");
-                links.add(&link.url)?;
-            }
+            client.add_link(&link)?;
+            println!("> done");
+            links.add(&link.url)?;
         } else {
             links.add(&link.url)?;
             println!("> marked {} as skipped", &link.url);

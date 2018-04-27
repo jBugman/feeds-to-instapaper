@@ -1,18 +1,10 @@
 use failure::{Fail, ResultExt};
 use reqwest;
-use reqwest::StatusCode;
 use url::{ParseError, Url};
 
-use ::Result;
+use Result;
 
 const BASE_URL: &str = "https://www.instapaper.com/api/";
-
-pub struct Client {
-    client: reqwest::Client,
-    base_url: Url,
-    username: String,
-    password: String,
-}
 
 #[derive(Debug, Serialize)]
 pub struct Link {
@@ -36,39 +28,69 @@ impl Link {
     }
 }
 
+#[derive(Debug, Deserialize)]
+pub struct Credentials {
+    username: String,
+    password: String,
+}
+
+impl Credentials {
+    pub fn new(username: String, password: String) -> Credentials {
+        Credentials { username, password }
+    }
+}
+
+trait UsingCredentials {
+    fn using(&mut self, c: &Credentials) -> &mut reqwest::RequestBuilder;
+}
+
+impl UsingCredentials for reqwest::RequestBuilder {
+    fn using(&mut self, c: &Credentials) -> &mut reqwest::RequestBuilder {
+        self.basic_auth(c.username.clone(), Some(c.password.clone()))
+    }
+}
+
+pub struct Client {
+    client: reqwest::Client,
+    base_url: Url,
+    credentials: Credentials,
+}
+
 impl Client {
-    pub fn new(username: &str, password: &str) -> Client {
-        let base_url = reqwest::Url::parse(BASE_URL).expect("typo in constant");
+    pub fn new(credentials: Credentials) -> Client {
+        let base_url = Url::parse(BASE_URL).expect("typo in constant");
         Client {
             client: reqwest::Client::new(),
             base_url,
-            username: username.to_owned(),
-            password: password.to_owned(),
+            credentials: credentials,
         }
     }
 
-    pub fn validate_credentials(&self) -> Result<bool> {
+    pub fn validate_credentials(&self) -> Result<()> {
         let url = self.base_url.join("authenticate")?;
-        let res = self.client
+        self.client
             .post(url)
-            .basic_auth(self.username.to_owned(), Some(self.password.to_owned()))
+            .using(&self.credentials)
             .send()
+            .context("error accessing instapaper api")?
+            .error_for_status()
             .context("could not validate instapaper credentials")?;
-        Ok(res.status() == StatusCode::Ok)
+        Ok(())
     }
 
-    pub fn add_link(&self, link: &Link) -> Result<bool> {
+    pub fn add_link(&self, link: &Link) -> Result<()> {
         let url = self.base_url.join("add")?;
-        let res = self.client
+        self.client
             .post(url)
-            .basic_auth(self.username.to_owned(), Some(self.password.to_owned()))
+            .using(&self.credentials)
             .form(link)
             .send()
+            .context("error accessing instapaper api")?
+            .error_for_status()
             .context(format_err!(
                 "could not post new link to instapaper ({})",
                 link.url
             ))?;
-        Ok(res.status() == StatusCode::Created)
-        // TODO: use returned saved link somehow?
+        Ok(())
     }
 }
