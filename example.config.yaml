@@ -1,0 +1,9 @@
+instapaper:
+  username: USERNAME_HERE
+  password: PASSWORD_HERE
+
+log_file: ~/.instapaper/link_log.txt
+
+urls:
+- https://blog.rust-lang.org/feed.xml
+# - https://github.com/blog/engineering.atom

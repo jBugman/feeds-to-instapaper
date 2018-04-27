@@ -30,14 +30,8 @@ impl Link {
 
 #[derive(Debug, Deserialize)]
 pub struct Credentials {
-    username: String,
-    password: String,
-}
-
-impl Credentials {
-    pub fn new(username: String, password: String) -> Credentials {
-        Credentials { username, password }
-    }
+    pub username: String,
+    pub password: String,
 }
 
 trait UsingCredentials {

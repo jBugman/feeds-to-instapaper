@@ -1,12 +1,12 @@
 extern crate atom_syndication;
 extern crate dialoguer;
-extern crate dotenv;
 #[macro_use]
 extern crate failure;
 extern crate reqwest;
 extern crate rss;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde_yaml;
 extern crate shellexpand;
 extern crate try_from;
 extern crate url;
@@ -19,7 +19,7 @@ use std::iter::FromIterator;
 use std::path::Path;
 
 use dialoguer::Confirmation;
-use failure::{Error, ResultExt, SyncFailure};
+use failure::{Error, ResultExt};
 use try_from::TryFrom; // TODO: convert to std(?) TryFrom when stabilized
 use url::Url;
 
@@ -31,23 +31,27 @@ use syndication::{Feed, Item};
 
 type Result<T> = std::result::Result<T, Error>;
 
+#[derive(Debug, Deserialize)]
+struct Config {
+    instapaper: Credentials,
+    log_file: String,
+    urls: Vec<String>,
+}
+
+const CONFIG_FILE_PATH: &str = "config.yaml";
+
 pub fn run() -> Result<()> {
     // Config
-    dotenv::dotenv()
-        .map_err(SyncFailure::new)
-        .context("failed to read .env file")?;
-    let instapaper_username =
-        env::var("INSTAPAPER_USERNAME").context("instapaper username is not set")?;
-    let instapaper_password =
-        env::var("INSTAPAPER_PASSWORD").context("instapaper password is not set")?;
-    let links_log_file = env::var("LINKS_LOG_FILE").context("log file path is not set")?;
-    let links_list_file = env::var("LINKS_LIST_FILE").context("links list file path is not set")?;
+    // TODO: make path configurable from command line
+    let config_file = env::var("CONFIG_FILE").unwrap_or_else(|_| String::from(CONFIG_FILE_PATH));
+    let config = read_to_string(&config_file)
+        .context(format_err!("failed to read config file ({})", &config_file))?;
+    let config: Config = serde_yaml::from_str(&config).context("failed to parse config")?;
 
-    let mut links = Links::from(&links_log_file)?;
-    let client = Client::new(Credentials::new(instapaper_username, instapaper_password));
+    let mut links = Links::from(&config.log_file)?;
+    let client = Client::new(config.instapaper);
 
-    let urls = load_link_list(&links_list_file)?;
-    for url in urls {
+    for url in config.urls {
         process_feed(&client, &mut links, &url)?;
     }
     Ok(())
@@ -60,12 +64,6 @@ fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
     let mut string = String::with_capacity(buf_size);
     file.read_to_string(&mut string)?;
     Ok(string)
-}
-
-fn load_link_list(path: &str) -> Result<Vec<String>> {
-    let text =
-        read_to_string(path).context(format_err!("failed to read link list file ({})", path))?;
-    Ok(text.lines().map(str::to_owned).collect())
 }
 
 fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
