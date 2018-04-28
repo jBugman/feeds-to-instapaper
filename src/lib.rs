@@ -25,7 +25,9 @@ use url::Url;
 
 pub mod syndication;
 pub mod instapaper;
+mod failure_ext;
 
+use failure_ext::*;
 use instapaper::{Client, Credentials, Link};
 use syndication::{Feed, Item};
 
@@ -44,8 +46,8 @@ pub fn run() -> Result<()> {
     // Config
     // TODO: make path configurable from command line
     let config_file = env::var("CONFIG_FILE").unwrap_or_else(|_| String::from(CONFIG_FILE_PATH));
-    let config = read_to_string(&config_file)
-        .context(format_err!("failed to read config file ({})", &config_file))?;
+    let config =
+        read_to_string(&config_file).context_fmt("failed to read config file", &config_file)?;
     let config: Config = serde_yaml::from_str(&config).context("failed to parse config")?;
 
     let mut links = Links::from(&config.log_file)?;
@@ -58,7 +60,7 @@ pub fn run() -> Result<()> {
 }
 
 // TODO: replace when stabilized
-fn read_to_string<P: AsRef<Path>>(path: P) -> Result<String> {
+fn read_to_string<P: AsRef<Path>>(path: P) -> std::result::Result<String, std::io::Error> {
     let mut file = File::open(path)?;
     let buf_size = file.metadata().map(|m| m.len() as usize + 1).unwrap_or(0);
     let mut string = String::with_capacity(buf_size);
@@ -70,7 +72,7 @@ fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
     // Downloading feed
     println!("Downloading {}…", url);
     let xml = reqwest::get(url)
-        .context(format_err!("failed to download feed ({})", url))?
+        .context_fmt("failed to download feed", url)?
         .text()?;
     // Parsing
     let feed = xml.parse::<Feed>().context("failed to parse feed")?;
@@ -86,8 +88,7 @@ fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
 
     // get base url for a feed
     let feed_url = feed.link.unwrap_or_else(|| url.to_owned());
-    let feed_url =
-        Url::parse(&feed_url).context(format_err!("failed to parse url ({})", feed_url))?;
+    let feed_url = Url::parse(&feed_url).context_fmt("failed to parse url", feed_url)?;
     for item in feed.items.into_iter().rev() {
         let link = Link::try_from(item)?.fix_url_schema(&feed_url)?;
         // skipping if already added
@@ -117,8 +118,7 @@ impl TryFrom<Item> for Link {
     type Err = Error;
 
     fn try_from(src: Item) -> Result<Self> {
-        let link = src.link
-            .ok_or_else(|| format_err!("url is missing in post"))?;
+        let link = src.link.or_fail("url is missing in post")?;
         // TODO: replace with .filter when stabilized
         let title = src.title.into_iter().find(|s| !s.is_empty()); // dropping empty titles
         Ok(Link { url: link, title })
@@ -138,10 +138,8 @@ impl Links {
         let path = Path::new(path);
         // ensuring log file directory
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent).context(format_err!(
-                "failed to create parent dir for a log file ({})",
-                parent.display()
-            ))?;
+            std::fs::create_dir_all(parent)
+                .context_path("failed to create parent dir for a log file", parent)?;
         }
         // open or create file
         let mut file = OpenOptions::new()
@@ -149,11 +147,11 @@ impl Links {
             .append(true)
             .create(true)
             .open(path)
-            .context(format_err!("failed to open log file ({})", path.display()))?;
+            .context_path("failed to open log file", path)?;
         // read
         let mut text = String::new();
         file.read_to_string(&mut text)
-            .context(format_err!("failed to read log file ({})", path.display()))?;
+            .context_path("failed to read log file", path)?;
         let items = BTreeSet::from_iter(text.lines().map(str::to_owned));
         // set up writing
         let file = LineWriter::new(file);

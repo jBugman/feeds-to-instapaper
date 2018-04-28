@@ -3,6 +3,7 @@ use reqwest;
 use url::{ParseError, Url};
 
 use Result;
+use failure_ext::FmtResultExt;
 
 const BASE_URL: &str = "https://www.instapaper.com/api/";
 
@@ -56,7 +57,7 @@ impl Client {
         Client {
             client: reqwest::Client::new(),
             base_url,
-            credentials: credentials,
+            credentials,
         }
     }
 
@@ -81,10 +82,7 @@ impl Client {
             .send()
             .context("error accessing instapaper api")?
             .error_for_status()
-            .context(format_err!(
-                "could not post new link to instapaper ({})",
-                link.url
-            ))?;
+            .context_fmt("could not post new link to instapaper", &link.url)?;
         Ok(())
     }
 }
