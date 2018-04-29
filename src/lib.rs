@@ -1,6 +1,7 @@
 extern crate atom_syndication;
 #[macro_use]
 extern crate clap;
+extern crate csv;
 extern crate dialoguer;
 #[macro_use]
 extern crate failure;
@@ -70,7 +71,7 @@ pub fn run() -> Result<()> {
     match app.subcommand() {
         ("import", Some(args)) => {
             let csv_path = args.value_of("INPUT").unwrap();
-            run_import(config, &mut links, csv_path)
+            run_import(&mut links, csv_path)
         }
         _ => run_link_processing(config, &mut links), // Processing links by default
     }
@@ -85,8 +86,25 @@ fn run_link_processing(config: Config, links: &mut Links) -> Result<()> {
     Ok(())
 }
 
-fn run_import(config: Config, links: &mut Links, csv_path: &str) -> Result<()> {
-    unimplemented!("TODO: run_import");
+fn run_import(links: &mut Links, csv_path: &str) -> Result<()> {
+    let mut csv_reader =
+        csv::Reader::from_path(csv_path).context_fmt("failed to read csv file", csv_path)?;
+    let mut existed = 0u16;
+    let mut total = 0u16;
+    for r in csv_reader.records() {
+        let line = r.context("failed to parse csv record")?;
+        if let Some(url) = line.get(0) {
+            if !links.saved(url) {
+                // println!("Importing {}", url);
+                links.add(url)?;
+            } else {
+                existed += 1;
+            }
+        }
+        total += 1;
+    }
+    println!("> imported: {}, duplicates: {}", total - existed, existed);
+    Ok(())
 }
 
 // TODO: replace when stabilized
