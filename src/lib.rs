@@ -19,7 +19,7 @@ use std::io::{LineWriter, Read, Write};
 use std::iter::FromIterator;
 use std::path::Path;
 
-use clap::{App, Arg};
+use clap::{App, Arg, SubCommand};
 use dialoguer::Confirmation;
 use failure::{Error, ResultExt};
 use try_from::TryFrom; // TODO: convert to std(?) TryFrom when stabilized
@@ -44,7 +44,7 @@ struct Config {
 
 pub fn run() -> Result<()> {
     // Arguments
-    let args = App::new("Feeds to Instapaper")
+    let app = App::new("Feeds to Instapaper")
         .version(crate_version!())
         .about(crate_description!())
         .arg(
@@ -53,20 +53,40 @@ pub fn run() -> Result<()> {
                 .value_name("FILE")
                 .help("Sets a custom config file"),
         )
+        .subcommand(
+            SubCommand::with_name("import")
+                .about("Import exported Instapaper CSV to pre-fill link log")
+                .arg(Arg::with_name("INPUT").required(true).index(1)),
+        )
         .get_matches();
     // Config
-    let config_file = args.value_of("config").unwrap_or("config.yaml");
+    let config_file = app.value_of("config").unwrap_or("config.yaml");
     let config =
         read_to_string(&config_file).context_fmt("failed to read config file", &config_file)?;
     let config: Config = serde_yaml::from_str(&config).context("failed to parse config")?;
-
+    // Loading already added links
     let mut links = Links::from(&config.log_file)?;
+    // Dispatching subcommands
+    match app.subcommand() {
+        ("import", Some(args)) => {
+            let csv_path = args.value_of("INPUT").unwrap();
+            run_import(config, &mut links, csv_path)
+        }
+        _ => run_link_processing(config, &mut links), // Processing links by default
+    }
+}
+
+fn run_link_processing(config: Config, links: &mut Links) -> Result<()> {
     let client = Client::new(config.instapaper);
 
     for url in config.urls {
-        process_feed(&client, &mut links, &url)?;
+        process_feed(&client, links, &url)?;
     }
     Ok(())
+}
+
+fn run_import(config: Config, links: &mut Links, csv_path: &str) -> Result<()> {
+    unimplemented!("TODO: run_import");
 }
 
 // TODO: replace when stabilized

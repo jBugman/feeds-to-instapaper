@@ -1,6 +1,6 @@
 [package]
 name = "feeds-to-instapaper"
-version = "0.5.0"
+version = "0.6.0"
 authors = ["Sergey Parshukov <codedby@bugman.me>"]
 readme = "README.md"
 license = "MIT"
