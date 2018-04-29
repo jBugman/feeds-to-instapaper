@@ -1,4 +1,6 @@
 extern crate atom_syndication;
+#[macro_use]
+extern crate clap;
 extern crate dialoguer;
 #[macro_use]
 extern crate failure;
@@ -12,12 +14,12 @@ extern crate try_from;
 extern crate url;
 
 use std::collections::BTreeSet;
-use std::env;
 use std::fs::{File, OpenOptions};
 use std::io::{LineWriter, Read, Write};
 use std::iter::FromIterator;
 use std::path::Path;
 
+use clap::{App, Arg};
 use dialoguer::Confirmation;
 use failure::{Error, ResultExt};
 use try_from::TryFrom; // TODO: convert to std(?) TryFrom when stabilized
@@ -40,12 +42,20 @@ struct Config {
     urls: Vec<String>,
 }
 
-const CONFIG_FILE_PATH: &str = "config.yaml";
-
 pub fn run() -> Result<()> {
+    // Arguments
+    let args = App::new("Feeds to Instapaper")
+        .version(crate_version!())
+        .about(crate_description!())
+        .arg(
+            Arg::with_name("config")
+                .long("config")
+                .value_name("FILE")
+                .help("Sets a custom config file"),
+        )
+        .get_matches();
     // Config
-    // TODO: make path configurable from command line
-    let config_file = env::var("CONFIG_FILE").unwrap_or_else(|_| String::from(CONFIG_FILE_PATH));
+    let config_file = args.value_of("config").unwrap_or("config.yaml");
     let config =
         read_to_string(&config_file).context_fmt("failed to read config file", &config_file)?;
     let config: Config = serde_yaml::from_str(&config).context("failed to parse config")?;

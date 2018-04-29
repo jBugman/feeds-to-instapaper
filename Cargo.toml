@@ -1,9 +1,13 @@
 [package]
 name = "feeds-to-instapaper"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Sergey Parshukov <codedby@bugman.me>"]
 readme = "README.md"
 license = "MIT"
+repository = "https://github.com/jBugman/feeds-to-instapaper"
+description = """
+Post new items from specified RSS/Atom feeds to Instapaper
+"""
 publish = false
 
 [[bin]]
@@ -12,6 +16,7 @@ path = "src/main.rs"
 
 [dependencies]
 atom_syndication = "0.5.8"
+clap = "2.31.2"
 dialoguer = "0.1.0"
 failure = "0.1.1"
 reqwest = "0.8.5"
