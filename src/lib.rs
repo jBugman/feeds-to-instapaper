@@ -1,5 +1,4 @@
 extern crate atom_syndication;
-#[macro_use]
 extern crate clap;
 extern crate csv;
 extern crate dialoguer;
@@ -20,15 +19,14 @@ use std::io::{LineWriter, Read, Write};
 use std::iter::FromIterator;
 use std::path::Path;
 
-use clap::{App, Arg, SubCommand};
+pub use try_from::TryFrom; // TODO: (Rust 1.27+) replace with std (https://github.com/rust-lang/rust/issues/33417)
 use dialoguer::Confirmation;
 use failure::{Error, ResultExt};
-use try_from::TryFrom; // TODO: convert to std(?) TryFrom when stabilized
 use url::Url;
 
 pub mod syndication;
 pub mod instapaper;
-mod failure_ext;
+pub mod failure_ext;
 
 use failure_ext::*;
 use instapaper::{Client, Credentials, Link};
@@ -37,38 +35,29 @@ use syndication::{Feed, Item};
 type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Deserialize)]
-struct Config {
+pub struct Config {
     instapaper: Credentials,
     log_file: String,
     urls: Vec<String>,
 }
 
-pub fn run() -> Result<()> {
-    // Arguments
-    let app = App::new("Feeds to Instapaper")
-        .version(crate_version!())
-        .about(crate_description!())
-        .arg(
-            Arg::with_name("config")
-                .long("config")
-                .value_name("FILE")
-                .help("Sets a custom config file"),
-        )
-        .subcommand(
-            SubCommand::with_name("import")
-                .about("Import exported Instapaper CSV to pre-fill link log")
-                .arg(Arg::with_name("INPUT").required(true).index(1)),
-        )
-        .get_matches();
-    // Config
-    let config_file = app.value_of("config").unwrap_or("config.yaml");
-    let config =
-        read_to_string(&config_file).context_fmt("failed to read config file", &config_file)?;
-    let config: Config = serde_yaml::from_str(&config).context("failed to parse config")?;
+impl<'a> TryFrom<&'a str> for Config {
+    type Err = Error;
+
+    fn try_from(src: &str) -> Result<Self> {
+        serde_yaml::from_str(src)
+            .context("failed to parse config")
+            .map_err(Error::from)
+    }
+}
+
+type Subcommand<'a> = (&'a str, Option<&'a clap::ArgMatches<'a>>);
+
+pub fn run(config: Config, subcommand: Subcommand) -> Result<()> {
     // Loading already added links
     let mut links = Links::from(&config.log_file)?;
     // Dispatching subcommands
-    match app.subcommand() {
+    match subcommand {
         ("import", Some(args)) => {
             let csv_path = args.value_of("INPUT").unwrap();
             run_import(&mut links, csv_path)
@@ -105,15 +94,6 @@ fn run_import(links: &mut Links, csv_path: &str) -> Result<()> {
     }
     println!("> imported: {}, duplicates: {}", total - existed, existed);
     Ok(())
-}
-
-// TODO: replace when stabilized
-fn read_to_string<P: AsRef<Path>>(path: P) -> std::result::Result<String, std::io::Error> {
-    let mut file = File::open(path)?;
-    let buf_size = file.metadata().map(|m| m.len() as usize + 1).unwrap_or(0);
-    let mut string = String::with_capacity(buf_size);
-    file.read_to_string(&mut string)?;
-    Ok(string)
 }
 
 fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
@@ -167,7 +147,7 @@ impl TryFrom<Item> for Link {
 
     fn try_from(src: Item) -> Result<Self> {
         let link = src.link.or_fail("url is missing in post")?;
-        // TODO: replace with .filter when stabilized
+        // TODO: (Rust 1.26) replace with .filter
         let title = src.title.into_iter().find(|s| !s.is_empty()); // dropping empty titles
         Ok(Link { url: link, title })
     }
