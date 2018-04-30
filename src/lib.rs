@@ -12,6 +12,7 @@ extern crate serde_yaml;
 extern crate shellexpand;
 extern crate try_from;
 extern crate url;
+extern crate yansi;
 
 use std::collections::BTreeSet;
 use std::fs::{File, OpenOptions};
@@ -23,6 +24,7 @@ pub use try_from::TryFrom; // TODO: (Rust 1.27+) replace with std (https://githu
 use dialoguer::Confirmation;
 use failure::{Error, ResultExt};
 use url::Url;
+use yansi::Paint;
 
 pub mod syndication;
 pub mod instapaper;
@@ -92,24 +94,29 @@ fn run_import(links: &mut Links, csv_path: &str) -> Result<()> {
         }
         total += 1;
     }
-    println!("> imported: {}, duplicates: {}", total - existed, existed);
+    println!(
+        "{} imported: {}, duplicates: {}",
+        Paint::green("Successfully"),
+        total - existed,
+        existed
+    );
     Ok(())
 }
 
 fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
     // Downloading feed
-    println!("Downloading {}…", url);
+    println!("Downloading {}{}", Paint::white(url), Paint::masked(" 🕓"));
     let xml = reqwest::get(url)
         .context_fmt("failed to download feed", url)?
         .text()?;
     // Parsing
     let feed = xml.parse::<Feed>().context("failed to parse feed")?;
-    println!("Processing \"{}\"", &feed.title);
+    println!("Processing \"{}\"", Paint::white(&feed.title));
 
     let mut skip_count = 0;
     let print_skips = |count: &mut u16| {
         if *count > 0 {
-            println!("> skipped {} already existing links", count);
+            println!("Skipped pre-existing links ({})", count);
             *count = 0;
         }
     };
@@ -127,14 +134,19 @@ fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
         print_skips(&mut skip_count);
 
         let name = link.title.as_ref().unwrap_or(&link.url);
-        if Confirmation::new(&format!("Add \"{}\"?", name)).interact()? {
-            println!("Adding to Instapaper…");
+        if Confirmation::new(&format!(
+            "{}Add \"{}\"?",
+            Paint::masked("📎  "),
+            Paint::white(name)
+        )).interact()?
+        {
+            println!("Adding to Instapaper{}", Paint::masked(" 🕓"));
             client.add_link(&link)?;
-            println!("> done");
+            println!("{} added", Paint::green("Successfully"));
             links.add(&link.url)?;
         } else {
             links.add(&link.url)?;
-            println!("> marked {} as skipped", &link.url);
+            println!("Marked {} as skipped", Paint::white(&link.url));
         }
     }
     print_skips(&mut skip_count);

@@ -1,39 +1,62 @@
+extern crate atty;
 #[macro_use]
 extern crate clap;
 extern crate failure;
-extern crate feeds_to_instapaper;
+extern crate yansi;
+
+extern crate feeds_to_instapaper as app;
 
 use failure::Error;
 use clap::{App, Arg, SubCommand};
+use yansi::Paint;
 
 mod fs_ext;
 
-use feeds_to_instapaper::{Config, failure_ext::FmtResultExt};
-use feeds_to_instapaper::TryFrom;
+use app::Config;
+use app::TryFrom;
+use app::failure_ext::FmtResultExt;
 use fs_ext::read_to_string; // TODO: (Rust 1.26) replace with fs::read_to_string
 
 fn main() {
     // Arguments
-    let app = App::new("Feeds to Instapaper")
+    let args = App::new("Feeds to Instapaper")
         .version(crate_version!())
         .about(crate_description!())
         .arg(
             Arg::with_name("config")
                 .long("config")
+                .default_value("config.yaml")
                 .value_name("FILE")
                 .help("Sets a custom config file"),
+        )
+        .arg(
+            Arg::with_name("no-color")
+                .long("no-color")
+                .help("Disable colors in output (disabled automatically on non-TTY)"),
         )
         .subcommand(
             SubCommand::with_name("import")
                 .about("Import exported Instapaper CSV to pre-fill link log")
-                .arg(Arg::with_name("INPUT").required(true).index(1)),
+                .arg(
+                    Arg::with_name("INPUT")
+                        .takes_value(true)
+                        .required(true)
+                        .index(1),
+                ),
         )
         .get_matches();
+    // Colors
+    let enabled = !args.is_present("no-color");
+    let enabled = enabled && Paint::enable_windows_ascii(); // always true on non-windows machine
+    let enabled = enabled && atty::is(atty::Stream::Stdout) && atty::is(atty::Stream::Stderr);
+    if !enabled {
+        Paint::disable();
+    }
     // Config
-    let config_path = app.value_of("config").unwrap_or("config.yaml");
+    let config_path = args.value_of("config").unwrap();
     let config = parse_config(config_path).unwrap_or_exit();
 
-    feeds_to_instapaper::run(config, app.subcommand()).unwrap_or_exit();
+    app::run(config, args.subcommand()).unwrap_or_exit();
 }
 
 fn parse_config(path: &str) -> Result<Config, Error> {
@@ -51,7 +74,7 @@ impl<T> FailureHandler<T> for Result<T, Error> {
         match self {
             Err(err) => {
                 let mut causes = err.causes();
-                eprintln!("error: {}", causes.next().unwrap());
+                eprintln!("{} {}", Paint::red("error:"), causes.next().unwrap());
                 for c in causes {
                     eprintln!(" caused by: {}", c);
                 }
