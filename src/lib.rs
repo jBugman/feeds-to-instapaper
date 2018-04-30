@@ -140,7 +140,7 @@ fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
             Paint::white(name)
         )).interact()?
         {
-            println!("Adding to Instapaper{}", Paint::masked(" 🕓"));
+            println!("Adding {} to Instapaper", Paint::white(&link.url));
             client.add_link(&link)?;
             println!("{} added", Paint::green("Successfully"));
             links.add(&link.url)?;
