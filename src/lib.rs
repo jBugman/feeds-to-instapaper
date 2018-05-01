@@ -41,6 +41,8 @@ pub struct Config {
     instapaper: Credentials,
     log_file: String,
     urls: Vec<String>,
+    #[serde(skip)]
+    pub auto_add: bool,
 }
 
 impl<'a> TryFrom<&'a str> for Config {
@@ -72,7 +74,7 @@ fn run_link_processing(config: Config, links: &mut Links) -> Result<()> {
     let client = Client::new(config.instapaper);
 
     for url in config.urls {
-        process_feed(&client, links, &url)?;
+        process_feed(&client, links, config.auto_add, &url)?;
     }
     Ok(())
 }
@@ -103,9 +105,15 @@ fn run_import(links: &mut Links, csv_path: &str) -> Result<()> {
     Ok(())
 }
 
-fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
+fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -> Result<()> {
     // Downloading feed
-    println!("Downloading {}{}", Paint::white(url), Paint::masked(" 🕓"));
+    println!(
+        "Downloading {}{}",
+        Paint::white(url),
+        Paint::masked(" 🕓")
+    )
+;
+
     let xml = reqwest::get(url)
         .context_fmt("failed to download feed", url)?
         .text()?;
@@ -134,12 +142,15 @@ fn process_feed(client: &Client, links: &mut Links, url: &str) -> Result<()> {
         print_skips(&mut skip_count);
 
         let name = link.title.as_ref().unwrap_or(&link.url);
-        if Confirmation::new(&format!(
-            "{}Add \"{}\"?",
-            Paint::masked("📎  "),
-            Paint::white(name)
-        )).interact()?
-        {
+        let mut add = auto_add;
+        if !auto_add {
+            add = Confirmation::new(&format!(
+                "{}Add \"{}\"?",
+                Paint::masked("📎  "),
+                Paint::white(name)
+            )).interact()?
+        }
+        if add {
             println!("Adding {} to Instapaper", Paint::white(&link.url));
             client.add_link(&link)?;
             println!("{} added", Paint::green("Successfully"));

@@ -34,6 +34,12 @@ fn main() {
                 .long("no-color")
                 .help("Disable colors in output (disabled automatically on non-TTY)"),
         )
+        .arg(
+            Arg::with_name("auto-add")
+                .long("auto-add")
+                .short("y")
+                .help("Add posts to Instapaper without asking"),
+        )
         .subcommand(
             SubCommand::with_name("import")
                 .about("Import exported Instapaper CSV to pre-fill link log")
@@ -54,7 +60,8 @@ fn main() {
     }
     // Config
     let config_path = args.value_of("config").unwrap();
-    let config = parse_config(config_path).unwrap_or_exit();
+    let mut config = parse_config(config_path).unwrap_or_exit();
+    config.auto_add = args.is_present("auto-add");
 
     app::run(config, args.subcommand()).unwrap_or_exit();
 }
