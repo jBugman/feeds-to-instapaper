@@ -10,9 +10,10 @@ extern crate rss;
 extern crate serde_derive;
 extern crate serde_yaml;
 extern crate shellexpand;
-extern crate try_from;
 extern crate url;
 extern crate yansi;
+
+extern crate future_rust;
 
 use std::collections::BTreeSet;
 use std::fs::{File, OpenOptions};
@@ -20,9 +21,10 @@ use std::io::{LineWriter, Read, Write};
 use std::iter::FromIterator;
 use std::path::Path;
 
-pub use try_from::TryFrom; // TODO: (Rust 1.27+) replace with std (https://github.com/rust-lang/rust/issues/33417)
 use dialoguer::Confirmation;
 use failure::{Error, ResultExt};
+use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
+use future_rust::option::FilterExt; // TODO: Deprecated in Rust 1.26
 use url::Url;
 use yansi::Paint;
 
@@ -170,8 +172,7 @@ impl TryFrom<Item> for Link {
 
     fn try_from(src: Item) -> Result<Self> {
         let link = src.link.or_fail("url is missing in post")?;
-        // TODO: (Rust 1.26) replace with .filter
-        let title = src.title.into_iter().find(|s| !s.is_empty()); // dropping empty titles
+        let title = src.title.filter_(String::is_empty); // FIXME: replace with .filter
         Ok(Link { url: link, title })
     }
 }

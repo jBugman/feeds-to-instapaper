@@ -5,9 +5,7 @@ authors = ["Sergey Parshukov <codedby@bugman.me>"]
 readme = "README.md"
 license = "MIT"
 repository = "https://github.com/jBugman/feeds-to-instapaper"
-description = """
-Post new items from specified RSS/Atom feeds to Instapaper
-"""
+description = "Post new items from specified RSS/Atom feeds to Instapaper"
 publish = false
 
 [[bin]]
@@ -19,14 +17,14 @@ atom_syndication = "0.5.8"
 atty = "0.2.9"
 clap = "2.31.2"
 csv = "1.0.0-beta.5"
-dialoguer = "~0.1.0"
-failure = "~0.1.1"
-reqwest = "~0.8.5"
+dialoguer = "0.1.0"
+failure = "0.1.1"
+future_rust = { git = "https://github.com/jBugman/rusty_toolbox/" }
+reqwest = "0.8.5"
 rss = "1.5.0"
 serde = "1.0.43"
 serde_derive = "1.0.45"
 serde_yaml = "0.7.4"
 shellexpand = "1.0.0"
-try_from = "0.2.2"
 url = "1.7.0"
 yansi = "0.4.0"

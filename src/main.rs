@@ -5,17 +5,16 @@ extern crate failure;
 extern crate yansi;
 
 extern crate feeds_to_instapaper as app;
+extern crate future_rust;
 
 use failure::Error;
 use clap::{App, Arg, SubCommand};
 use yansi::Paint;
 
-mod fs_ext;
-
 use app::Config;
-use app::TryFrom;
 use app::failure_ext::FmtResultExt;
-use fs_ext::read_to_string; // TODO: (Rust 1.26) replace with fs::read_to_string
+use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
+use future_rust::fs::read_to_string; // TODO: Deprecated in Rust 1.26
 
 fn main() {
     // Arguments
