@@ -1,10 +1,10 @@
 use std::str::FromStr;
 
 use atom_syndication as atom;
-use failure::{Error, Fail, ResultExt, SyncFailure};
+use failure::{Error, SyncFailure};
 use rss;
 
-use Result;
+use failure_ext::{ContextAsErrorExt, Result};
 
 #[derive(Debug)]
 pub struct Feed {
@@ -31,9 +31,9 @@ impl FromStr for Feed {
             Err(rss::Error::InvalidStartTag) => atom::Feed::from_str(src)
                 .map(Feed::from)
                 .map_err(SyncFailure::new) // fixing old error-chain lack of Sync 
-                .context("failed to parse atom xml"),
-            Err(err) => Err(err.context("failed to parse rss xml")),
-        }.map_err(Error::from)
+                .context_err("failed to parse atom xml"),
+            Err(err) => Err(err).context_err("failed to parse rss xml"),
+        }
     }
 }
 

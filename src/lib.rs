@@ -48,9 +48,7 @@ impl<'a> TryFrom<&'a str> for Config {
     type Err = Error;
 
     fn try_from(src: &str) -> Result<Self> {
-        serde_yaml::from_str(src)
-            .context("failed to parse config")
-            .map_err(Error::from)
+        serde_yaml::from_str(src).context_err("failed to parse config")
     }
 }
 
