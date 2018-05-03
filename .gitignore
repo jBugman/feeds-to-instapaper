@@ -1,13 +1,5 @@
 /target/
-
-# removed due to being an executable
-Cargo.lock
-
-# rustfmt backup files
 **/*.rs.bk
 
-.env
-config.yaml
-
-.vscode/
 data/
+config.yaml
