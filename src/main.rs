@@ -11,7 +11,7 @@ use clap::{App, Arg, SubCommand};
 use yansi::Paint;
 
 use app::Config;
-use failure_ext::{Error, FmtResultExt};
+use failure_ext::{Error, FmtResultExt, UnwrapOrExit};
 use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
 use future_rust::fs::read_to_string; // TODO: Deprecated in Rust 1.26
 
@@ -68,24 +68,4 @@ fn parse_config(path: &str) -> Result<Config, Error> {
     let config = read_to_string(&path).context_fmt("failed to read config file", &path)?;
     let config = Config::try_from(&config)?;
     Ok(config)
-}
-
-trait FailureHandler<T> {
-    fn unwrap_or_exit(self) -> T;
-}
-
-impl<T> FailureHandler<T> for Result<T, Error> {
-    fn unwrap_or_exit(self) -> T {
-        match self {
-            Err(err) => {
-                let mut causes = err.causes();
-                eprintln!("{} {}", Paint::red("error:"), causes.next().unwrap());
-                for c in causes {
-                    eprintln!(" caused by: {}", c);
-                }
-                std::process::exit(1);
-            }
-            Ok(v) => v,
-        }
-    }
 }

@@ -19,7 +19,7 @@ clap = "2.31.2"
 csv = "1.0.0-beta.5"
 dialoguer = "0.1.0"
 failure = "0.1.1"
-failure_ext = { git = "https://github.com/jBugman/rusty_toolbox/" }
+failure_ext = { git = "https://github.com/jBugman/rusty_toolbox/", features = [ "color" ] }
 future_rust = { git = "https://github.com/jBugman/rusty_toolbox/" }
 reqwest = "0.8.5"
 rss = "1.5.0"

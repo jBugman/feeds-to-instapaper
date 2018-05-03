@@ -305,10 +305,11 @@ dependencies = [
 
 [[package]]
 name = "failure_ext"
-version = "0.2.0"
-source = "git+https://github.com/jBugman/rusty_toolbox/#88f5ddc46b7301b9e781c5b3884bd978b64867e2"
+version = "0.3.0"
+source = "git+https://github.com/jBugman/rusty_toolbox/#f33cb3c6f2f902564bd82ae44ba54aa64b54cba7"
 dependencies = [
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "yansi 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -321,7 +322,7 @@ dependencies = [
  "csv 1.0.0-beta.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "dialoguer 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "failure_ext 0.2.0 (git+https://github.com/jBugman/rusty_toolbox/)",
+ "failure_ext 0.3.0 (git+https://github.com/jBugman/rusty_toolbox/)",
  "future_rust 0.3.0 (git+https://github.com/jBugman/rusty_toolbox/)",
  "reqwest 0.8.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rss 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -363,7 +364,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "future_rust"
 version = "0.3.0"
-source = "git+https://github.com/jBugman/rusty_toolbox/#e98257dd1d6da147ed66fe664d907efe71bbefcb"
+source = "git+https://github.com/jBugman/rusty_toolbox/#f33cb3c6f2f902564bd82ae44ba54aa64b54cba7"
 dependencies = [
  "try_from 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -1458,7 +1459,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum error-chain 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ff511d5dc435d703f4971bc399647c9bc38e20cb41452e3b9feb4765419ed3f3"
 "checksum failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "934799b6c1de475a012a02dab0ace1ace43789ee4b99bcfbf1a2e3e8ced5de82"
 "checksum failure_derive 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c7cdda555bb90c9bb67a3b670a0f42de8e73f5981524123ad8578aafec8ddb8b"
-"checksum failure_ext 0.2.0 (git+https://github.com/jBugman/rusty_toolbox/)" = "<none>"
+"checksum failure_ext 0.3.0 (git+https://github.com/jBugman/rusty_toolbox/)" = "<none>"
 "checksum foreign-types 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "f6f339eb8adc052cd2ca78910fda869aefa38d22d5cb648e6485e4d3fc06f3b1"
 "checksum foreign-types-shared 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 "checksum fuchsia-zircon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2e9763c69ebaae630ba35f74888db465e49e259ba1bc0eda7d06f4a067615d82"
