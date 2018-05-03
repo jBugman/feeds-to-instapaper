@@ -2,8 +2,7 @@ use failure::{Fail, ResultExt};
 use reqwest;
 use url::{ParseError, Url};
 
-use Result;
-use failure_ext::FmtResultExt;
+use failure_ext::{FmtResultExt, Result};
 
 const BASE_URL: &str = "https://www.instapaper.com/api/";
 

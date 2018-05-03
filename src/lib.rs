@@ -2,7 +2,6 @@ extern crate atom_syndication;
 extern crate clap;
 extern crate csv;
 extern crate dialoguer;
-#[macro_use]
 extern crate failure;
 extern crate reqwest;
 extern crate rss;
@@ -13,6 +12,7 @@ extern crate shellexpand;
 extern crate url;
 extern crate yansi;
 
+extern crate failure_ext;
 extern crate future_rust;
 
 use std::collections::BTreeSet;
@@ -22,7 +22,8 @@ use std::iter::FromIterator;
 use std::path::Path;
 
 use dialoguer::Confirmation;
-use failure::{Error, ResultExt};
+use failure::Error;
+use failure_ext::*;
 use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
 use future_rust::option::FilterExt; // TODO: Deprecated in Rust 1.26
 use url::Url;
@@ -30,13 +31,9 @@ use yansi::Paint;
 
 pub mod syndication;
 pub mod instapaper;
-pub mod failure_ext;
 
-use failure_ext::*;
 use instapaper::{Client, Credentials, Link};
 use syndication::{Feed, Item};
-
-type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {

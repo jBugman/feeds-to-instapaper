@@ -1,18 +1,17 @@
 extern crate atty;
 #[macro_use]
 extern crate clap;
-extern crate failure;
 extern crate yansi;
 
+extern crate failure_ext;
 extern crate feeds_to_instapaper as app;
 extern crate future_rust;
 
-use failure::Error;
 use clap::{App, Arg, SubCommand};
 use yansi::Paint;
 
 use app::Config;
-use app::failure_ext::FmtResultExt;
+use failure_ext::{Error, FmtResultExt};
 use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
 use future_rust::fs::read_to_string; // TODO: Deprecated in Rust 1.26
 
