@@ -306,7 +306,7 @@ dependencies = [
 [[package]]
 name = "failure_ext"
 version = "0.4.0"
-source = "git+https://github.com/jBugman/rusty_toolbox/#149a731a731637eb84c71b65e4daf71fff2ee277"
+source = "git+https://github.com/jBugman/rusty_toolbox/#60434755a0c3a4f40c639fa05712e73855fafbb2"
 dependencies = [
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "yansi 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -314,7 +314,7 @@ dependencies = [
 
 [[package]]
 name = "feeds-to-instapaper"
-version = "0.10.0"
+version = "0.11.0"
 dependencies = [
  "atom_syndication 0.5.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "atty 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -323,7 +323,7 @@ dependencies = [
  "dialoguer 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure_ext 0.4.0 (git+https://github.com/jBugman/rusty_toolbox/)",
- "future_rust 0.3.0 (git+https://github.com/jBugman/rusty_toolbox/)",
+ "future_rust 0.4.0 (git+https://github.com/jBugman/rusty_toolbox/)",
  "reqwest 0.8.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "rss 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.43 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -363,11 +363,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "future_rust"
-version = "0.3.0"
-source = "git+https://github.com/jBugman/rusty_toolbox/#149a731a731637eb84c71b65e4daf71fff2ee277"
-dependencies = [
- "try_from 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
+version = "0.4.0"
+source = "git+https://github.com/jBugman/rusty_toolbox/#60434755a0c3a4f40c639fa05712e73855fafbb2"
 
 [[package]]
 name = "futures"
@@ -1267,11 +1264,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "try_from"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
 name = "ucd-util"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1464,7 +1456,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum foreign-types-shared 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "00b0228411908ca8685dba7fc2cdd70ec9990a6e753e89b6ac91a84c40fbaf4b"
 "checksum fuchsia-zircon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2e9763c69ebaae630ba35f74888db465e49e259ba1bc0eda7d06f4a067615d82"
 "checksum fuchsia-zircon-sys 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
-"checksum future_rust 0.3.0 (git+https://github.com/jBugman/rusty_toolbox/)" = "<none>"
+"checksum future_rust 0.4.0 (git+https://github.com/jBugman/rusty_toolbox/)" = "<none>"
 "checksum futures 0.1.21 (registry+https://github.com/rust-lang/crates.io-index)" = "1a70b146671de62ec8c8ed572219ca5d594d9b06c0b364d5e67b722fc559b48c"
 "checksum futures-cpupool 0.1.8 (registry+https://github.com/rust-lang/crates.io-index)" = "ab90cde24b3319636588d0c35fe03b1333857621051837ed769faefb4c2162e4"
 "checksum httparse 1.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "c2f407128745b78abc95c0ffbe4e5d37427fdc0d45470710cfef8c44522a2e37"
@@ -1566,7 +1558,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum tokio-timer 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "29a89e4ad0c8f1e4c9860e605c38c69bfdad3cccd4ea446e58ff588c1c07a397"
 "checksum tokio-tls 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "772f4b04e560117fe3b0a53e490c16ddc8ba6ec437015d91fa385564996ed913"
 "checksum tokio-udp 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "137bda266504893ac4774e0ec4c2108f7ccdbcb7ac8dced6305fe9e4e0b5041a"
-"checksum try_from 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "923a7ee3e97dbfe8685261beb4511cc9620a1252405d02693d43169729570111"
 "checksum ucd-util 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "fd2be2d6639d0f8fe6cdda291ad456e23629558d466e2789d2c3e9892bda285d"
 "checksum unicase 1.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7f4765f83163b74f957c797ad9253caf97f103fb064d3999aea9568d09fc8a33"
 "checksum unicase 2.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "284b6d3db520d67fbe88fd778c21510d1b0ba4a551e5d0fbb023d33405f6de8a"

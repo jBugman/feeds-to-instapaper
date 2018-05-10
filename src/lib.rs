@@ -25,7 +25,7 @@ use dialoguer::Confirmation;
 use failure::Error;
 use failure_ext::*;
 use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
-use future_rust::option::FilterExt; // TODO: Deprecated in Rust 1.26
+use future_rust::option::FilterExt; // TODO: Deprecated in Rust 1.27+
 use url::Url;
 use yansi::Paint;
 
@@ -47,7 +47,7 @@ pub struct Config {
 }
 
 impl<'a> TryFrom<&'a str> for Config {
-    type Err = Error;
+    type Error = Error;
 
     fn try_from(src: &str) -> Result<Self> {
         serde_yaml::from_str(src).context_err("failed to parse config")
@@ -166,7 +166,7 @@ fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -
 }
 
 impl TryFrom<Item> for Link {
-    type Err = Error;
+    type Error = Error;
 
     fn try_from(src: Item) -> Result<Self> {
         let link = src.link.or_fail("url is missing in post")?;

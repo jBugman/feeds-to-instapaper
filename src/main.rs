@@ -13,7 +13,6 @@ use yansi::Paint;
 use app::Config;
 use failure_ext::{Error, FmtResultExt, UnwrapOrExit};
 use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
-use future_rust::fs::read_to_string; // TODO: Deprecated in Rust 1.26
 
 fn main() {
     // Arguments
@@ -72,7 +71,7 @@ fn main() {
 }
 
 fn parse_config(path: &str) -> Result<Config, Error> {
-    let config = read_to_string(&path).context_fmt("failed to read config file", &path)?;
+    let config = std::fs::read_to_string(&path).context_fmt("failed to read config file", &path)?;
     let config = Config::try_from(&config)?;
     Ok(config)
 }
