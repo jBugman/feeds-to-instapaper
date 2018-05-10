@@ -42,6 +42,8 @@ pub struct Config {
     urls: Vec<String>,
     #[serde(skip)]
     pub auto_add: bool,
+    #[serde(skip)]
+    pub skip_download_errors: bool,
 }
 
 impl<'a> TryFrom<&'a str> for Config {
@@ -71,7 +73,13 @@ fn run_link_processing(config: Config, links: &mut Links) -> Result<()> {
     let client = Client::new(config.instapaper);
 
     for url in config.urls {
-        process_feed(&client, links, config.auto_add, &url)?;
+        if let Err(err) = process_feed(&client, links, config.auto_add, &url) {
+            if config.skip_download_errors {
+                eprintln!("{} {}", Paint::yellow("error:"), err);
+            } else {
+                return Err(err);
+            }
+        }
     }
     Ok(())
 }
@@ -104,12 +112,7 @@ fn run_import(links: &mut Links, csv_path: &str) -> Result<()> {
 
 fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -> Result<()> {
     // Downloading feed
-    println!(
-        "Downloading {}{}",
-        Paint::white(url),
-        Paint::masked(" 🕓")
-    )
-;
+    println!("Downloading {}", Paint::white(url));
 
     let xml = reqwest::get(url)
         .context_fmt("failed to download feed", url)?

@@ -38,6 +38,12 @@ fn main() {
                 .short("y")
                 .help("Add posts to Instapaper without asking"),
         )
+        .arg(
+            Arg::with_name("skip-download-errors")
+                .long("skip-download-errors")
+                .short("s")
+                .help("Proceed after failed feed download"),
+        )
         .subcommand(
             SubCommand::with_name("import")
                 .about("Import exported Instapaper CSV to pre-fill link log")
@@ -60,6 +66,7 @@ fn main() {
     let config_path = args.value_of("config").unwrap();
     let mut config = parse_config(config_path).unwrap_or_exit();
     config.auto_add = args.is_present("auto-add");
+    config.skip_download_errors = args.is_present("skip-download-errors");
 
     app::run(config, args.subcommand()).unwrap_or_exit();
 }
