@@ -8,13 +8,16 @@ extern crate feeds_to_instapaper as app;
 extern crate future_rust;
 
 use clap::{App, Arg, SubCommand};
+use failure_ext::{log_errors, Result};
 use yansi::Paint;
 
 use app::Config;
-use failure_ext::{Error, FmtResultExt, UnwrapOrExit};
-use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
 
 fn main() {
+    log_errors(run_main());
+}
+
+fn run_main() -> Result<()> {
     // Arguments
     let args = App::new("Feeds to Instapaper")
         .version(crate_version!())
@@ -63,15 +66,9 @@ fn main() {
     }
     // Config
     let config_path = args.value_of("config").unwrap();
-    let mut config = parse_config(config_path).unwrap_or_exit();
+    let mut config = Config::new(config_path)?;
     config.auto_add = args.is_present("auto-add");
     config.skip_download_errors = args.is_present("skip-download-errors");
 
-    app::run(config, args.subcommand()).unwrap_or_exit();
-}
-
-fn parse_config(path: &str) -> Result<Config, Error> {
-    let config = std::fs::read_to_string(&path).context_fmt("failed to read config file", &path)?;
-    let config = Config::try_from(&config)?;
-    Ok(config)
+    app::run(config, args.subcommand())
 }

@@ -16,7 +16,7 @@ extern crate failure_ext;
 extern crate future_rust;
 
 use std::collections::BTreeSet;
-use std::fs::{File, OpenOptions};
+use std::fs::{read_to_string, File, OpenOptions};
 use std::io::{LineWriter, Read, Write};
 use std::iter::FromIterator;
 use std::path::Path;
@@ -29,8 +29,8 @@ use future_rust::option::FilterExt; // TODO: Deprecated in Rust 1.27+
 use url::Url;
 use yansi::Paint;
 
-pub mod syndication;
 pub mod instapaper;
+pub mod syndication;
 
 use instapaper::{Client, Credentials, Link};
 use syndication::{Feed, Item};
@@ -51,6 +51,13 @@ impl<'a> TryFrom<&'a str> for Config {
 
     fn try_from(src: &str) -> Result<Self> {
         serde_yaml::from_str(src).context_err("failed to parse config")
+    }
+}
+
+impl Config {
+    pub fn new(path: impl AsRef<Path>) -> Result<Self> {
+        let yaml = read_to_string(&path).context_path("failed to read config file", path)?;
+        Config::try_from(&yaml)
     }
 }
 
