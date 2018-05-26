@@ -177,7 +177,8 @@ impl TryFrom<Item> for Link {
 
     fn try_from(src: Item) -> Result<Self> {
         let link = src.link.or_fail("url is missing in post")?;
-        let title = src.title.filter_(String::is_empty); // FIXME: replace with .filter
+        let title = src.title.filter_(|s| !s.is_empty()); // FIXME: replace with .filter
+                                                          // TODO: write a test
         Ok(Link { url: link, title })
     }
 }
