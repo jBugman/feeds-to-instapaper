@@ -5,7 +5,7 @@ extern crate feeds_to_instapaper as app;
 
 use crate::app::Config;
 use clap::{App, Arg, SubCommand};
-use failure_ext::{log_errors, Result};
+use failure_ext::Result;
 
 fn main() -> Result<()> {
     // Arguments
@@ -60,5 +60,5 @@ fn main() -> Result<()> {
     config.auto_add = args.is_present("auto-add");
     config.skip_download_errors = args.is_present("skip-download-errors");
 
-    log_errors(app::run(config, args.subcommand()))
+    app::run(config, args.subcommand())
 }

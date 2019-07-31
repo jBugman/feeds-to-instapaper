@@ -1,5 +1,4 @@
 use failure::{Fail, ResultExt};
-use reqwest;
 use url::{ParseError, Url};
 
 use failure_ext::{FmtResultExt, Result};

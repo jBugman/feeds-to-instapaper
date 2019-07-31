@@ -7,7 +7,6 @@ use std::io::{LineWriter, Read, Write};
 use std::iter::FromIterator;
 use std::path::Path;
 
-use dialoguer::Confirmation;
 use failure::Error;
 use failure_ext::*;
 use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
@@ -16,8 +15,7 @@ use yansi::Paint;
 pub mod instapaper;
 pub mod syndication;
 
-use crate::instapaper::{Client, Credentials, Link};
-use crate::syndication::{Feed, Item};
+use crate::instapaper::{Credentials, Link};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -59,7 +57,7 @@ pub fn run(config: Config, subcommand: (&str, Option<&clap::ArgMatches>)) -> Res
 }
 
 fn run_link_processing(config: Config, links: &mut Links) -> Result<()> {
-    let client = Client::new(config.instapaper);
+    let client = instapaper::Client::new(config.instapaper);
 
     for url in config.urls {
         if let Err(err) = process_feed(&client, links, config.auto_add, &url) {
@@ -99,7 +97,12 @@ fn run_import(links: &mut Links, csv_path: &str) -> Result<()> {
     Ok(())
 }
 
-fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -> Result<()> {
+fn process_feed(
+    client: &instapaper::Client,
+    links: &mut Links,
+    auto_add: bool,
+    url: &str,
+) -> Result<()> {
     // Downloading feed
     println!("Downloading {}", Paint::white(url));
 
@@ -107,7 +110,9 @@ fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -
         .context_fmt("failed to download feed", url)?
         .text()?;
     // Parsing
-    let feed = xml.parse::<Feed>().context("failed to parse feed")?;
+    let feed = xml
+        .parse::<syndication::Feed>()
+        .context("failed to parse feed")?;
     println!("Processing \"{}\"", Paint::white(&feed.title));
 
     let mut skip_count = 0;
@@ -133,7 +138,7 @@ fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -
         let name = link.title.as_ref().unwrap_or(&link.url);
         let mut add = auto_add;
         if !auto_add {
-            add = Confirmation::new(&format!(
+            add = dialoguer::Confirmation::new(&format!(
                 "{}Add \"{}\"?",
                 Paint::masked("📎  "),
                 Paint::white(name)
@@ -155,10 +160,10 @@ fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -
     Ok(())
 }
 
-impl TryFrom<Item> for Link {
+impl TryFrom<syndication::Item> for Link {
     type Error = Error;
 
-    fn try_from(src: Item) -> Result<Self> {
+    fn try_from(src: syndication::Item) -> Result<Self> {
         let link = src.link.or_fail("url is missing in post")?;
         let title = src.title.filter(|s| !s.is_empty());
         Ok(Link { url: link, title })
