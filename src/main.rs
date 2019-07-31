@@ -7,11 +7,7 @@ use crate::app::Config;
 use clap::{App, Arg, SubCommand};
 use failure_ext::{log_errors, Result};
 
-fn main() {
-    log_errors(run_main());
-}
-
-fn run_main() -> Result<()> {
+fn main() -> Result<()> {
     // Arguments
     let args = App::new("Feeds to Instapaper")
         .version(crate_version!())
@@ -64,5 +60,5 @@ fn run_main() -> Result<()> {
     config.auto_add = args.is_present("auto-add");
     config.skip_download_errors = args.is_present("skip-download-errors");
 
-    app::run(config, args.subcommand())
+    log_errors(app::run(config, args.subcommand()))
 }
