@@ -1,39 +1,21 @@
-extern crate atom_syndication;
-extern crate clap;
-extern crate csv;
-extern crate dialoguer;
-extern crate failure;
-extern crate reqwest;
-extern crate rss;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_yaml;
-extern crate shellexpand;
-extern crate url;
-extern crate yansi;
-
-extern crate failure_ext;
-extern crate future_rust;
 
 use std::collections::BTreeSet;
+use std::convert::TryFrom;
 use std::fs::{read_to_string, File, OpenOptions};
 use std::io::{LineWriter, Read, Write};
 use std::iter::FromIterator;
 use std::path::Path;
 
-use dialoguer::Confirmation;
 use failure::Error;
 use failure_ext::*;
-use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
-use future_rust::option::FilterExt; // TODO: Deprecated in Rust 1.27+
-use url::Url;
 use yansi::Paint;
 
 pub mod instapaper;
 pub mod syndication;
 
-use instapaper::{Client, Credentials, Link};
-use syndication::{Feed, Item};
+use crate::instapaper::{Credentials, Link};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -46,24 +28,14 @@ pub struct Config {
     pub skip_download_errors: bool,
 }
 
-impl<'a> TryFrom<&'a str> for Config {
-    type Error = Error;
-
-    fn try_from(src: &str) -> Result<Self> {
-        serde_yaml::from_str(src).context_err("failed to parse config")
-    }
-}
-
 impl Config {
     pub fn new(path: impl AsRef<Path>) -> Result<Self> {
         let yaml = read_to_string(&path).context_path("failed to read config file", path)?;
-        Config::try_from(&yaml)
+        serde_yaml::from_str(&yaml).context_err("failed to parse config")
     }
 }
 
-type Subcommand<'a> = (&'a str, Option<&'a clap::ArgMatches<'a>>);
-
-pub fn run(config: Config, subcommand: Subcommand) -> Result<()> {
+pub fn run(config: Config, subcommand: (&str, Option<&clap::ArgMatches>)) -> Result<()> {
     // Loading already added links
     let mut links = Links::from(&config.log_file)?;
     // Dispatching subcommands
@@ -77,7 +49,7 @@ pub fn run(config: Config, subcommand: Subcommand) -> Result<()> {
 }
 
 fn run_link_processing(config: Config, links: &mut Links) -> Result<()> {
-    let client = Client::new(config.instapaper);
+    let client = instapaper::Client::new(config.instapaper);
 
     for url in config.urls {
         if let Err(err) = process_feed(&client, links, config.auto_add, &url) {
@@ -117,7 +89,12 @@ fn run_import(links: &mut Links, csv_path: &str) -> Result<()> {
     Ok(())
 }
 
-fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -> Result<()> {
+fn process_feed(
+    client: &instapaper::Client,
+    links: &mut Links,
+    auto_add: bool,
+    url: &str,
+) -> Result<()> {
     // Downloading feed
     println!("Downloading {}", Paint::white(url));
 
@@ -125,7 +102,9 @@ fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -
         .context_fmt("failed to download feed", url)?
         .text()?;
     // Parsing
-    let feed = xml.parse::<Feed>().context("failed to parse feed")?;
+    let feed = xml
+        .parse::<syndication::Feed>()
+        .context("failed to parse feed")?;
     println!("Processing \"{}\"", Paint::white(&feed.title));
 
     let mut skip_count = 0;
@@ -138,7 +117,7 @@ fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -
 
     // get base url for a feed
     let feed_url = feed.link.unwrap_or_else(|| url.to_owned());
-    let feed_url = Url::parse(&feed_url).context_fmt("failed to parse url", feed_url)?;
+    let feed_url = url::Url::parse(&feed_url).context_fmt("failed to parse url", feed_url)?;
     for item in feed.items.into_iter().rev() {
         let link = Link::try_from(item)?.fix_url_schema(&feed_url)?;
         // skipping if already added
@@ -151,11 +130,12 @@ fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -
         let name = link.title.as_ref().unwrap_or(&link.url);
         let mut add = auto_add;
         if !auto_add {
-            add = Confirmation::new(&format!(
+            add = dialoguer::Confirmation::new(&format!(
                 "{}Add \"{}\"?",
                 Paint::masked("📎  "),
                 Paint::white(name)
-            )).interact()?
+            ))
+            .interact()?
         }
         if add {
             println!("Adding {} to Instapaper", Paint::white(&link.url));
@@ -172,13 +152,12 @@ fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -
     Ok(())
 }
 
-impl TryFrom<Item> for Link {
+impl TryFrom<syndication::Item> for Link {
     type Error = Error;
 
-    fn try_from(src: Item) -> Result<Self> {
+    fn try_from(src: syndication::Item) -> Result<Self> {
         let link = src.link.or_fail("url is missing in post")?;
-        let title = src.title.filter_(|s| !s.is_empty()); // FIXME: replace with .filter
-                                                          // TODO: write a test
+        let title = src.title.filter(|s| !s.is_empty());
         Ok(Link { url: link, title })
     }
 }

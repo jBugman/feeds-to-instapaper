@@ -1,23 +1,13 @@
-extern crate atty;
 #[macro_use]
 extern crate clap;
-extern crate yansi;
 
-extern crate failure_ext;
 extern crate feeds_to_instapaper as app;
-extern crate future_rust;
 
+use crate::app::Config;
 use clap::{App, Arg, SubCommand};
-use failure_ext::{log_errors, Result};
-use yansi::Paint;
+use failure_ext::Result;
 
-use app::Config;
-
-fn main() {
-    log_errors(run_main());
-}
-
-fn run_main() -> Result<()> {
+fn main() -> Result<()> {
     // Arguments
     let args = App::new("Feeds to Instapaper")
         .version(crate_version!())
@@ -59,10 +49,10 @@ fn run_main() -> Result<()> {
         .get_matches();
     // Colors
     let enabled = !args.is_present("no-color");
-    let enabled = enabled && Paint::enable_windows_ascii(); // always true on non-windows machine
+    let enabled = enabled && yansi::Paint::enable_windows_ascii(); // always true on non-windows machine
     let enabled = enabled && atty::is(atty::Stream::Stdout) && atty::is(atty::Stream::Stderr);
     if !enabled {
-        Paint::disable();
+        yansi::Paint::disable();
     }
     // Config
     let config_path = args.value_of("config").unwrap();
