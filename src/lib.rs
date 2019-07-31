@@ -11,7 +11,6 @@ use dialoguer::Confirmation;
 use failure::Error;
 use failure_ext::*;
 use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
-use future_rust::option::FilterExt; // TODO: Deprecated in Rust 1.27+
 use yansi::Paint;
 
 pub mod instapaper;
@@ -161,8 +160,7 @@ impl TryFrom<Item> for Link {
 
     fn try_from(src: Item) -> Result<Self> {
         let link = src.link.or_fail("url is missing in post")?;
-        let title = src.title.filter_(|s| !s.is_empty()); // FIXME: replace with .filter
-                                                          // TODO: write a test
+        let title = src.title.filter(|s| !s.is_empty());
         Ok(Link { url: link, title })
     }
 }
