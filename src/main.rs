@@ -1,9 +1,7 @@
 #[macro_use]
 extern crate clap;
 
-extern crate failure_ext;
 extern crate feeds_to_instapaper as app;
-extern crate future_rust;
 
 use crate::app::Config;
 use clap::{App, Arg, SubCommand};

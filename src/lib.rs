@@ -1,9 +1,6 @@
 #[macro_use]
 extern crate serde_derive;
 
-extern crate failure_ext;
-extern crate future_rust;
-
 use std::collections::BTreeSet;
 use std::fs::{read_to_string, File, OpenOptions};
 use std::io::{LineWriter, Read, Write};
@@ -51,7 +48,7 @@ impl Config {
 
 type Subcommand<'a> = (&'a str, Option<&'a clap::ArgMatches<'a>>);
 
-pub fn run(config: Config, subcommand: Subcommand) -> Result<()> {
+pub fn run(config: Config, subcommand: Subcommand<'_>) -> Result<()> {
     // Loading already added links
     let mut links = Links::from(&config.log_file)?;
     // Dispatching subcommands
