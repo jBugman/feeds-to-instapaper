@@ -31,7 +31,7 @@ pub struct Config {
     pub skip_download_errors: bool,
 }
 
-impl<'a> TryFrom<&'a str> for Config {
+impl TryFrom<&str> for Config {
     type Error = Error;
 
     fn try_from(src: &str) -> Result<Self> {
@@ -46,9 +46,7 @@ impl Config {
     }
 }
 
-type Subcommand<'a> = (&'a str, Option<&'a clap::ArgMatches<'a>>);
-
-pub fn run(config: Config, subcommand: Subcommand<'_>) -> Result<()> {
+pub fn run(config: Config, subcommand: (&str, Option<&clap::ArgMatches>)) -> Result<()> {
     // Loading already added links
     let mut links = Links::from(&config.log_file)?;
     // Dispatching subcommands

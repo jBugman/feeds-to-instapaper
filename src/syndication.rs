@@ -61,7 +61,7 @@ impl From<rss::Channel> for Feed {
     }
 }
 
-impl<'a> From<&'a rss::Item> for Item {
+impl From<&rss::Item> for Item {
     fn from(src: &rss::Item) -> Self {
         Item {
             title: src.title().map(str::to_owned),
@@ -71,7 +71,7 @@ impl<'a> From<&'a rss::Item> for Item {
     }
 }
 
-impl<'a> From<&'a atom::Entry> for Item {
+impl From<&atom::Entry> for Item {
     fn from(src: &atom::Entry) -> Self {
         Item {
             title: Some(src.title().to_owned()),
