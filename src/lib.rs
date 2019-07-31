@@ -32,8 +32,8 @@ use yansi::Paint;
 pub mod instapaper;
 pub mod syndication;
 
-use instapaper::{Client, Credentials, Link};
-use syndication::{Feed, Item};
+use crate::instapaper::{Client, Credentials, Link};
+use crate::syndication::{Feed, Item};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {

@@ -7,7 +7,7 @@ extern crate failure_ext;
 extern crate feeds_to_instapaper as app;
 extern crate future_rust;
 
-use app::Config;
+use crate::app::Config;
 use clap::{App, Arg, SubCommand};
 use failure_ext::{log_errors, Result};
 use yansi::Paint;
