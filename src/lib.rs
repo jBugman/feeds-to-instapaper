@@ -2,6 +2,7 @@
 extern crate serde_derive;
 
 use std::collections::BTreeSet;
+use std::convert::TryFrom;
 use std::fs::{read_to_string, File, OpenOptions};
 use std::io::{LineWriter, Read, Write};
 use std::iter::FromIterator;
@@ -9,7 +10,6 @@ use std::path::Path;
 
 use failure::Error;
 use failure_ext::*;
-use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
 use yansi::Paint;
 
 pub mod instapaper;
@@ -28,18 +28,10 @@ pub struct Config {
     pub skip_download_errors: bool,
 }
 
-impl TryFrom<&str> for Config {
-    type Error = Error;
-
-    fn try_from(src: &str) -> Result<Self> {
-        serde_yaml::from_str(src).context_err("failed to parse config")
-    }
-}
-
 impl Config {
     pub fn new(path: impl AsRef<Path>) -> Result<Self> {
         let yaml = read_to_string(&path).context_path("failed to read config file", path)?;
-        Config::try_from(&yaml)
+        serde_yaml::from_str(&yaml).context_err("failed to parse config")
     }
 }
 
