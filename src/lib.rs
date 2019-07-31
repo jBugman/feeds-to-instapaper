@@ -1,16 +1,5 @@
-extern crate atom_syndication;
-extern crate clap;
-extern crate csv;
-extern crate dialoguer;
-extern crate failure;
-extern crate reqwest;
-extern crate rss;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_yaml;
-extern crate shellexpand;
-extern crate url;
-extern crate yansi;
 
 extern crate failure_ext;
 extern crate future_rust;
@@ -26,7 +15,6 @@ use failure::Error;
 use failure_ext::*;
 use future_rust::convert::TryFrom; // TODO: Deprecated in Rust 1.27+
 use future_rust::option::FilterExt; // TODO: Deprecated in Rust 1.27+
-use url::Url;
 use yansi::Paint;
 
 pub mod instapaper;
@@ -138,7 +126,7 @@ fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -
 
     // get base url for a feed
     let feed_url = feed.link.unwrap_or_else(|| url.to_owned());
-    let feed_url = Url::parse(&feed_url).context_fmt("failed to parse url", feed_url)?;
+    let feed_url = url::Url::parse(&feed_url).context_fmt("failed to parse url", feed_url)?;
     for item in feed.items.into_iter().rev() {
         let link = Link::try_from(item)?.fix_url_schema(&feed_url)?;
         // skipping if already added
