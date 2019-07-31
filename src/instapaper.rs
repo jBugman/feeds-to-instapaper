@@ -3,7 +3,6 @@ use reqwest;
 use url::{ParseError, Url};
 
 use failure_ext::{FmtResultExt, Result};
-
 const BASE_URL: &str = "https://www.instapaper.com/api/";
 
 #[derive(Debug, Serialize)]

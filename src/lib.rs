@@ -155,7 +155,8 @@ fn process_feed(client: &Client, links: &mut Links, auto_add: bool, url: &str) -
                 "{}Add \"{}\"?",
                 Paint::masked("📎  "),
                 Paint::white(name)
-            )).interact()?
+            ))
+            .interact()?
         }
         if add {
             println!("Adding {} to Instapaper", Paint::white(&link.url));

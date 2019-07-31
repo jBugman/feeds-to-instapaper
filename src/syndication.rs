@@ -30,7 +30,7 @@ impl FromStr for Feed {
             Ok(chan) => Ok(Feed::from(chan)),
             Err(rss::Error::InvalidStartTag) => atom::Feed::from_str(src)
                 .map(Feed::from)
-                .map_err(SyncFailure::new) // fixing old error-chain lack of Sync 
+                .map_err(SyncFailure::new) // fixing old error-chain lack of Sync
                 .context_err("failed to parse atom xml"),
             Err(err) => Err(err).context_err("failed to parse rss xml"),
         }
