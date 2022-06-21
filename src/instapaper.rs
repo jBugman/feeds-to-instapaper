@@ -32,17 +32,17 @@ pub struct Credentials {
 }
 
 trait UsingCredentials {
-    fn using(&mut self, c: &Credentials) -> &mut reqwest::RequestBuilder;
+    fn using(self, c: &Credentials) -> Self;
 }
 
-impl UsingCredentials for reqwest::RequestBuilder {
-    fn using(&mut self, c: &Credentials) -> &mut reqwest::RequestBuilder {
+impl UsingCredentials for reqwest::blocking::RequestBuilder {
+    fn using(self, c: &Credentials) -> Self {
         self.basic_auth(c.username.clone(), Some(c.password.clone()))
     }
 }
 
 pub struct Client {
-    client: reqwest::Client,
+    client: reqwest::blocking::Client,
     base_url: Url,
     credentials: Credentials,
 }
@@ -51,7 +51,7 @@ impl Client {
     pub fn new(credentials: Credentials) -> Client {
         let base_url = Url::parse(BASE_URL).expect("typo in constant");
         Client {
-            client: reqwest::Client::new(),
+            client: reqwest::blocking::Client::new(),
             base_url,
             credentials,
         }
@@ -60,7 +60,7 @@ impl Client {
     pub fn validate_credentials(&self) -> Result<()> {
         let url = self.base_url.join("authenticate")?;
         self.client
-            .post(url)
+            .post(url.as_str())
             .using(&self.credentials)
             .send()
             .context("error accessing instapaper api")?
@@ -72,7 +72,7 @@ impl Client {
     pub fn add_link(&self, link: &Link) -> Result<()> {
         let url = self.base_url.join("add")?;
         self.client
-            .post(url)
+            .post(url.as_str())
             .using(&self.credentials)
             .form(link)
             .send()

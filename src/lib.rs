@@ -98,7 +98,7 @@ fn process_feed(
     // Downloading feed
     println!("Downloading {}", Paint::white(url));
 
-    let xml = reqwest::get(url)
+    let xml = reqwest::blocking::get(url)
         .context(format!("failed to download feed: {}", url))?
         .text()?;
     // Parsing
