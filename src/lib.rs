@@ -8,8 +8,7 @@ use std::io::{LineWriter, Read, Write};
 use std::iter::FromIterator;
 use std::path::Path;
 
-use failure::Error;
-use failure_ext::*;
+use anyhow::{anyhow, Context, Result};
 use yansi::Paint;
 
 pub mod instapaper;
@@ -29,9 +28,10 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(path: impl AsRef<Path>) -> Result<Self> {
-        let yaml = read_to_string(&path).context_path("failed to read config file", path)?;
-        serde_yaml::from_str(&yaml).context_err("failed to parse config")
+    pub fn new(path: impl AsRef<Path> + std::fmt::Display) -> Result<Self> {
+        let yaml =
+            read_to_string(&path).context(format!("failed to read config file: {}", path))?;
+        serde_yaml::from_str(&yaml).context("failed to parse config")
     }
 }
 
@@ -64,8 +64,8 @@ fn run_link_processing(config: Config, links: &mut Links) -> Result<()> {
 }
 
 fn run_import(links: &mut Links, csv_path: &str) -> Result<()> {
-    let mut csv_reader =
-        csv::Reader::from_path(csv_path).context_fmt("failed to read csv file", csv_path)?;
+    let mut csv_reader = csv::Reader::from_path(csv_path)
+        .context(format!("failed to read csv file: {}", csv_path))?;
     let mut existed = 0u16;
     let mut total = 0u16;
     for r in csv_reader.records() {
@@ -99,7 +99,7 @@ fn process_feed(
     println!("Downloading {}", Paint::white(url));
 
     let xml = reqwest::get(url)
-        .context_fmt("failed to download feed", url)?
+        .context(format!("failed to download feed: {}", url))?
         .text()?;
     // Parsing
     let feed = xml
@@ -117,7 +117,8 @@ fn process_feed(
 
     // get base url for a feed
     let feed_url = feed.link.unwrap_or_else(|| url.to_owned());
-    let feed_url = url::Url::parse(&feed_url).context_fmt("failed to parse url", feed_url)?;
+    let feed_url =
+        url::Url::parse(&feed_url).context(format!("failed to parse url: {}", feed_url))?;
     for item in feed.items.into_iter().rev() {
         let link = Link::try_from(item)?.fix_url_schema(&feed_url)?;
         // skipping if already added
@@ -154,10 +155,10 @@ fn process_feed(
 }
 
 impl TryFrom<syndication::Item> for Link {
-    type Error = Error;
+    type Error = anyhow::Error;
 
     fn try_from(src: syndication::Item) -> Result<Self> {
-        let link = src.link.or_fail("url is missing in post")?;
+        let link = src.link.ok_or_else(|| anyhow!("url is missing in post"))?;
         let title = src.title.filter(|s| !s.is_empty());
         Ok(Link { url: link, title })
     }
@@ -176,8 +177,10 @@ impl Links {
         let path = Path::new(path);
         // ensuring log file directory
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)
-                .context_path("failed to create parent dir for a log file", parent)?;
+            std::fs::create_dir_all(parent).context(format!(
+                "failed to create parent dir for a log file: {:?}",
+                parent
+            ))?;
         }
         // open or create file
         let mut file = OpenOptions::new()
@@ -185,11 +188,11 @@ impl Links {
             .append(true)
             .create(true)
             .open(path)
-            .context_path("failed to open log file", path)?;
+            .context(format!("failed to open log file: {:?}", path))?;
         // read
         let mut text = String::new();
         file.read_to_string(&mut text)
-            .context_path("failed to read log file", path)?;
+            .context(format!("failed to read log file: {:?}", path))?;
         let items = BTreeSet::from_iter(text.lines().map(str::to_owned));
         // set up writing
         let file = LineWriter::new(file);

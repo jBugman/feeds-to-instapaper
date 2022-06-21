@@ -4,8 +4,8 @@ extern crate clap;
 extern crate feeds_to_instapaper as app;
 
 use crate::app::Config;
+use anyhow::Result;
 use clap::{App, Arg, SubCommand};
-use failure_ext::Result;
 
 fn main() -> Result<()> {
     // Arguments

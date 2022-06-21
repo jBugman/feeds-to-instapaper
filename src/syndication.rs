@@ -1,10 +1,8 @@
 use std::str::FromStr;
 
+use anyhow::{Context, Error, Result};
 use atom_syndication as atom;
-use failure::{Error, SyncFailure};
 use rss;
-
-use failure_ext::{ContextAsErrorExt, Result};
 
 #[derive(Debug)]
 pub struct Feed {
@@ -23,16 +21,16 @@ pub struct Item {
 }
 
 impl FromStr for Feed {
-    type Err = Error;
+    type Err = anyhow::Error;
 
     fn from_str(src: &str) -> Result<Self> {
         match rss::Channel::from_str(src) {
             Ok(chan) => Ok(Feed::from(chan)),
             Err(rss::Error::InvalidStartTag) => atom::Feed::from_str(src)
                 .map(Feed::from)
-                .map_err(SyncFailure::new) // fixing old error-chain lack of Sync
-                .context_err("failed to parse atom xml"),
-            Err(err) => Err(err).context_err("failed to parse rss xml"),
+                .map_err(Error::from)
+                .map_err(|e| e.context("failed to parse atom xml")),
+            Err(err) => Err(err).context("failed to parse rss xml"),
         }
     }
 }
@@ -42,7 +40,7 @@ impl From<atom::Feed> for Feed {
         Feed {
             title: src.title().to_owned(),
             description: src.subtitle().map(str::to_owned),
-            last_update: Some(src.updated().to_owned()),
+            last_update: Some(src.updated().to_rfc3339()),
             link: find_alternate(src.links()),
             items: src.entries().iter().map(Item::from).collect(),
         }
@@ -75,7 +73,7 @@ impl From<&atom::Entry> for Item {
     fn from(src: &atom::Entry) -> Self {
         Item {
             title: Some(src.title().to_owned()),
-            pub_date: src.published().map(str::to_owned),
+            pub_date: src.published().map(atom::FixedDateTime::to_rfc3339),
             link: find_alternate(src.links()),
         }
     }

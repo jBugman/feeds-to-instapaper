@@ -1,6 +1,6 @@
 [package]
 name = "feeds-to-instapaper"
-version = "0.12.0"
+version = "0.12.3"
 authors = ["Sergey Parshukov <codedby@bugman.me>"]
 edition = "2018"
 readme = "README.md"
@@ -14,17 +14,14 @@ name = "instapaper"
 path = "src/main.rs"
 
 [dependencies]
-atom_syndication = "0.5.8"
+anyhow = "1.0.58"
+atom_syndication = "0.9.1"
 atty = "0.2.10"
 clap = "2.31.2"
 csv = "1.0.0-beta.5"
 dialoguer = "0.10.1"
-failure = "0.1.1"
-failure_ext = { git = "https://github.com/jBugman/rusty_toolbox/", features = [
-  "color",
-] }
 reqwest = "0.8.5"
-rss = "1.5.0"
+rss = "1.10.0"
 serde = "1.0.53"
 serde_derive = "1.0.53"
 serde_yaml = "0.8.24"

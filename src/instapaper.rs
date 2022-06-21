@@ -1,7 +1,5 @@
-use failure::{Fail, ResultExt};
+use anyhow::{anyhow, Context, Result};
 use url::{ParseError, Url};
-
-use failure_ext::{FmtResultExt, Result};
 
 const BASE_URL: &str = "https://www.instapaper.com/api/";
 
@@ -22,7 +20,7 @@ impl Link {
                 self.url = url.into_string();
                 Ok(self)
             }
-            Err(err) => Err(err.context("failed to parse post url"))?,
+            Err(err) => Err(anyhow!("failed to parse post url: {}", err)),
         }
     }
 }
@@ -80,7 +78,10 @@ impl Client {
             .send()
             .context("error accessing instapaper api")?
             .error_for_status()
-            .context_fmt("could not post new link to instapaper", &link.url)?;
+            .context(format!(
+                "could not post new link to instapaper: {}",
+                &link.url
+            ))?;
         Ok(())
     }
 }
