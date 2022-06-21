@@ -17,7 +17,7 @@ impl Link {
             Ok(_) => Ok(self),
             Err(ParseError::RelativeUrlWithoutBase) => {
                 let url = feed_url.join(&self.url).context("failed to fix post url")?;
-                self.url = url.into_string();
+                self.url = url.to_string();
                 Ok(self)
             }
             Err(err) => Err(anyhow!("failed to parse post url: {}", err)),
