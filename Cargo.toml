@@ -1,6 +1,6 @@
 [package]
 name = "feeds-to-instapaper"
-version = "0.12.3"
+version = "0.12.4"
 authors = ["Sergey Parshukov <codedby@bugman.me>"]
 edition = "2018"
 readme = "README.md"
@@ -15,7 +15,7 @@ path = "src/main.rs"
 
 [dependencies]
 anyhow = "1.0"
-atom_syndication = "0.9.1"
+atom_syndication = "0.11"
 atty = "0.2.10"
 clap = "2.31.2"
 csv = "1.0.0-beta.5"
