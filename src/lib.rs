@@ -130,12 +130,13 @@ fn process_feed(
         let name = link.title.as_ref().unwrap_or(&link.url);
         let mut add = auto_add;
         if !auto_add {
-            add = dialoguer::Confirmation::new(&format!(
-                "{}Add \"{}\"?",
-                Paint::masked("📎  "),
-                Paint::white(name)
-            ))
-            .interact()?
+            add = dialoguer::Confirm::new()
+                .with_prompt(&format!(
+                    "{}Add \"{}\"?",
+                    Paint::masked("📎  "),
+                    Paint::white(name)
+                ))
+                .interact()?
         }
         if add {
             println!("Adding {} to Instapaper", Paint::white(&link.url));
