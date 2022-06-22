@@ -38,8 +38,8 @@ impl FromStr for Feed {
 impl From<atom::Feed> for Feed {
     fn from(src: atom::Feed) -> Self {
         Feed {
-            title: src.title().to_owned(),
-            description: src.subtitle().map(str::to_owned),
+            title: String::from(src.title().as_str()),
+            description: src.subtitle().map(atom::Text::as_str).map(String::from),
             last_update: Some(src.updated().to_rfc3339()),
             link: find_alternate(src.links()),
             items: src.entries().iter().map(Item::from).collect(),
@@ -72,7 +72,7 @@ impl From<&rss::Item> for Item {
 impl From<&atom::Entry> for Item {
     fn from(src: &atom::Entry) -> Self {
         Item {
-            title: Some(src.title().to_owned()),
+            title: Some(src.title().to_string()),
             pub_date: src.published().map(atom::FixedDateTime::to_rfc3339),
             link: find_alternate(src.links()),
         }
