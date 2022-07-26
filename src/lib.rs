@@ -19,7 +19,7 @@ use crate::instapaper::{Credentials, Link};
 #[derive(Debug, Deserialize)]
 pub struct Config {
     instapaper: Credentials,
-    log_file: String,
+    pub log_file: String,
     urls: Vec<String>,
     #[serde(skip)]
     pub auto_add: bool,
@@ -35,20 +35,7 @@ impl Config {
     }
 }
 
-pub fn run(config: Config, subcommand: (&str, Option<&clap::ArgMatches>)) -> Result<()> {
-    // Loading already added links
-    let mut links = Links::from(&config.log_file)?;
-    // Dispatching subcommands
-    match subcommand {
-        ("import", Some(args)) => {
-            let csv_path = args.value_of("INPUT").unwrap();
-            run_import(&mut links, csv_path)
-        }
-        _ => run_link_processing(config, &mut links), // Processing links by default
-    }
-}
-
-fn run_link_processing(config: Config, links: &mut Links) -> Result<()> {
+pub fn run_link_processing(config: Config, links: &mut Links) -> Result<()> {
     let client = instapaper::Client::new(config.instapaper);
 
     for url in config.urls {
@@ -63,7 +50,7 @@ fn run_link_processing(config: Config, links: &mut Links) -> Result<()> {
     Ok(())
 }
 
-fn run_import(links: &mut Links, csv_path: &str) -> Result<()> {
+pub fn run_import(links: &mut Links, csv_path: &str) -> Result<()> {
     let mut csv_reader = csv::Reader::from_path(csv_path)
         .context(format!("failed to read csv file: {}", csv_path))?;
     let mut existed = 0u16;
@@ -165,13 +152,13 @@ impl TryFrom<syndication::Item> for Link {
 }
 
 #[derive(Debug)]
-struct Links {
+pub struct Links {
     pub items: BTreeSet<String>,
     file: LineWriter<File>,
 }
 
 impl Links {
-    fn from(path: &str) -> Result<Self> {
+    pub fn from(path: &str) -> Result<Self> {
         // expanding home directory in path
         let path: &str = &shellexpand::tilde(path);
         let path = Path::new(path);
